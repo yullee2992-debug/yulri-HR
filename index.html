@@ -1082,29 +1082,137 @@ const DATE_LABEL = {
 // status: 'active'(휴직중) | 'return'(복귀예정) | 'pending'(대기중) | 'end'(종료)
 const employees = [
   {
-    leaveId: 6,
+    leaveId: 6,           // 장기병가
     name: '지현민',
     joinDate: '2008-04-22',
     process: 'Packaging',
     reason: '뇌경색',
-    period: '2026.03.16~2026.04.26 -6주-',
-    returnDate: '2026-04-26',
+    period: '2026.04.27~2026.05.31 (5주)',
+    returnDate: '2026-06-01',
     keyDate: '',
     note: '1차 연장 심의회 진행중',
     status: 'active',
   },
   {
-    leaveId: 4,
+    leaveId: 4,           // 육아휴직
     name: '김지훈',
     joinDate: '2020-01-06',
     process: 'Final assembly',
     reason: '아이 돌봄',
-    period: '2025.12.08~2026.06.07 -6개월-',
+    period: '2025.12.08~2026.06.07 (6개월)',
     returnDate: '2026-06-08',
     keyDate: '2026-06-08',
     note: '첫째 육아휴직 6개월 사용',
     status: 'active',
   },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이예승',
+    joinDate: '2017-08-08',
+    process: 'Termination/Shrink/Insertion',
+    reason: '좌골직장농양',
+    period: '2026.04.18~2026.05.15 (4주)',
+    returnDate: '2026-05-18',
+    keyDate: '2026-04-18',
+    note: '무급',
+    status: 'active',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '양소영',
+    joinDate: '12/4/2024',
+    process: 'Stack bonding',
+    reason: '자궁 수술',
+    period: '2026.04.08~2026.06.02 (8주)',
+    returnDate: '2026-06-04',
+    keyDate: '2026-04-08',
+    note: '무급',
+    status: 'active',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이찬휘',
+    joinDate: '5/28/2007',
+    process: 'Technician',
+    reason: '허리디스크 수술',
+    period: '2026.04.07~2026.06.05 (2개월)',
+    returnDate: '2026-06-08',
+    keyDate: '2026-04-08',
+    note: '유급',
+    status: 'active',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이효원',
+    joinDate: '3/28/2022',
+    process: 'Termination/Shrink/Insertion',
+    reason: '발목 수술',
+    period: '2026.04.27~2026.07.23 (88일) - 4차',
+    returnDate: '2026-07-24',
+    keyDate: '1/29/2026 , 2/26/2026',
+    note: '무급',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '조민기',
+    joinDate: '12/19/2017',
+    process: 'Final assembly',
+    reason: '아이 돌봄',
+    period: '2026.01.14~2026.06.13 (5개월)',
+    returnDate: '2026-06-15',
+    keyDate: '',
+    note: '첫째 육아휴직 5개월 사용',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '허현주',
+    joinDate: '6/16/2025',
+    process: 'Phase1&2공정',
+    reason: '아이 돌봄',
+    period: '2025.12.16~2026.06.15 (6개월)-계약기간',
+    returnDate: '2026-06-16',
+    keyDate: '',
+    note: '셋짜자녀 육아휴직 9개월 사용 건/ 계약만료 시 육아휴직 자동 종료',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '정이용',
+    joinDate: '6/3/2019',
+    process: 'Test',
+    reason: '아이 양육',
+    period: '2025-01-13~2026-07-12(18개월)',
+    returnDate: '2026-07-13',
+    keyDate: '',
+    note: '육아휴직 1년 사용 + 배우자 육아휴직으로 인한 6개월 생성',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '정성훈',
+    joinDate: '2/10/2020',
+    process: 'Final assembly',
+    reason: '아이 돌봄',
+    period: '2026.02.23~2026.08.22 (6개월)',
+    returnDate: '2026-08-24',
+    keyDate: '',
+    note: '첫째 자녀에대하여 육아휴직 6개월 사용',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이남경',
+    joinDate: '10/4/2016',
+    process: 'Admin',
+    reason: '아이 돌봄',
+    period: '2025.12.08~2026.09.05 (약 9개월)',
+    returnDate: '2026-09-07',
+    keyDate: '',
+    note: '첫째자녀 잔여 2개월 29일 + 배우자 육아휴직 6개월 = 약9개월',
+    status: 'active',
+  }
 ];
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
