@@ -721,18 +721,17 @@ const DATE_LABEL = {
 // 형식: { leaveId, name, joinDate, process, reason, period, keyDate, note, status }
 // status: 'active'(휴직중) | 'return'(복귀예정) | 'pending'(대기중) | 'end'(종료)
 const employees = [
-  // 아래는 예시입니다. 지우고 실제 데이터 입력하세요.
-  // {
-  //   leaveId: 4,
-  //   name: '홍길동',
-  //   joinDate: '2020-03-02',
-  //   process: 'PL01',
-  //   reason: '육아휴직',
-  //   period: '2025-01-01 ~ 2026-01-01',
-  //   keyDate: '2024-12-20',   // 출산예정일 or 수술일
-  //   note: '연장 예정',
-  //   status: 'active',
-  // },
+  {
+    leaveId: 6,              // ← 휴직 종류 번호
+    name: '지현민',           // ← 이름
+    joinDate: '2008-04-22',  // ← 입사일
+    process: 'Packaging',         // ← 담당공정
+    reason: '뇌경색',       // ← 사유
+    period: '2026.03.16~2026.04.26 (6주)',  // ← 기간
+    keyDate: '-',   // ← 출산예정일 or 수술일
+    note: '1차 연장 심의회 진행중',        // ← 비고
+    status: 'active',        // ← 상태
+  },
 ];
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
