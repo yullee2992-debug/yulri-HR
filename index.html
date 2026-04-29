@@ -1,0 +1,5991 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR 휴직 관리 도우미</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --navy: #0f2342;
+    --navy2: #1a3a5c;
+    --blue: #1e5fa8;
+    --accent: #00c2ff;
+    --accent2: #ff6b35;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --text: #1a2332;
+    --muted: #6b7c93;
+    --border: #d1dce8;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --shadow: 0 4px 24px rgba(15,35,66,0.10);
+    --shadow-lg: 0 12px 48px rgba(15,35,66,0.18);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ──────────────────────────────── */
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 60%, #1a4a7a 100%);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  }
+  .header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 18px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--blue));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  header h1 {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  header p {
+    color: rgba(255,255,255,0.55);
+    font-size: 12px;
+    font-weight: 300;
+    margin-top: 2px;
+  }
+  .header-badge {
+    background: rgba(0,194,255,0.15);
+    border: 1px solid rgba(0,194,255,0.3);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .export-btn {
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.18s;
+  }
+  .export-btn:hover { background: rgba(255,255,255,0.22); }
+
+  /* ── 알람 벨 ─────────────────────────────── */
+  .bell-btn {
+    position: relative;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 50%;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.18s;
+    flex-shrink: 0;
+  }
+  .bell-btn:hover { background: rgba(255,255,255,0.22); }
+  .bell-btn.has-alarm {
+    animation: bellShake 1.2s ease infinite;
+    background: rgba(239,68,68,0.25);
+    border-color: rgba(239,68,68,0.5);
+  }
+  @keyframes bellShake {
+    0%,100% { transform: rotate(0deg); }
+    15% { transform: rotate(15deg); }
+    30% { transform: rotate(-12deg); }
+    45% { transform: rotate(10deg); }
+    60% { transform: rotate(-8deg); }
+    75% { transform: rotate(5deg); }
+  }
+  .bell-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 17px; height: 17px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+    border: 2px solid var(--navy);
+  }
+
+  /* 알람 팝업 */
+  .alarm-popup {
+    display: none;
+    position: fixed;
+    top: 70px; right: 20px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 12px 48px rgba(15,35,66,0.22);
+    width: 340px;
+    z-index: 300;
+    overflow: hidden;
+    animation: fadeDown 0.2s ease;
+  }
+  .alarm-popup.open { display: block; }
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .alarm-head {
+    background: linear-gradient(135deg, #991b1b, #ef4444);
+    padding: 12px 16px;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .alarm-body { padding: 10px 8px; max-height: 320px; overflow-y: auto; }
+  .alarm-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    margin-bottom: 4px;
+    border-left: 3px solid #ef4444;
+    background: #fef2f2;
+    transition: background 0.15s;
+  }
+  .alarm-item:hover { background: #fee2e2; }
+  .alarm-item:last-child { margin-bottom: 0; }
+  .alarm-name { font-size: 13px; font-weight: 700; color: #1a2332; }
+  .alarm-type { font-size: 11px; color: #6b7c93; margin-top: 1px; }
+  .alarm-date {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ef4444;
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: right;
+  }
+  .alarm-dday {
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    background: #ef4444;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-top: 2px;
+    display: inline-block;
+  }
+  .alarm-empty {
+    text-align: center;
+    padding: 20px;
+    color: #6b7c93;
+    font-size: 13px;
+  }
+
+  /* ── 사이드 탭 ───────────────────────────── */
+  .side-tab {
+    flex: 1;
+    padding: 8px 4px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .side-tab:first-child { border-radius: 8px 0 0 8px; }
+  .side-tab:last-child  { border-radius: 0 8px 8px 0; border-left: none; }
+  .side-tab.active {
+    background: var(--navy);
+    color: #fff;
+    border-color: var(--navy);
+  }
+  .side-tab:hover:not(.active) { background: #f0f4f8; }
+
+  /* 종료이력 목록 */
+  .history-item {
+    padding: 9px 10px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .history-item:hover { background: #f0f4f8; border-color: var(--border); }
+  .history-item.active { background: rgba(30,95,168,0.08); border-color: rgba(30,95,168,0.2); }
+  .history-item-name { font-size: 12px; font-weight: 700; color: var(--navy); }
+  .history-item-sub  { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .report-date {
+    text-align: right;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    padding: 8px 4px 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .report-total-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+    margin-bottom: 8px;
+  }
+  .report-total-input label { font-size: 12px; font-weight: 700; color: var(--navy); white-space: nowrap; }
+  .report-total-input input {
+    width: 70px; padding: 5px 8px;
+    border: 1.5px solid var(--border); border-radius: 6px;
+    font-family: inherit; font-size: 13px; font-weight: 700; text-align: center; outline: none;
+  }
+  .report-total-input input:focus { border-color: var(--blue); }
+  .report-total-input .btn-calc {
+    padding: 5px 12px; background: var(--navy); color: white;
+    border: none; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .report-total-input .btn-calc:hover { background: var(--blue); }
+  .report-tbl { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+  .report-tbl th, .report-tbl td { border: 1px solid #c8d5e3; padding: 7px 10px; text-align: center; }
+  .report-tbl thead th { background: #1F497D; color: white; font-weight: 700; font-size: 11px; }
+  .report-tbl thead th.sub { background: #2e6096; }
+  .report-tbl td { font-weight: 500; }
+  .report-tbl td.bold { font-weight: 700; }
+  .report-note { font-size: 12px; color: var(--text); padding: 4px 4px 8px; border-top: 1px dashed var(--border); margin-top: 4px; }
+  .report-note span { font-weight: 700; color: var(--navy); }
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    width: 100%;
+    max-width: 900px;
+    margin: auto;
+    overflow: hidden;
+  }
+  .modal-head {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-head h2 { color: #fff; font-size: 15px; font-weight: 700; }
+  .modal-head p { color: rgba(255,255,255,0.6); font-size: 11px; margin-top: 2px; }
+  .modal-close {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 7px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+  }
+  .modal-body { padding: 20px 22px; }
+
+  /* 직원 목록 */
+  .emp-manage-list { margin-bottom: 16px; }
+  .emp-manage-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    margin-bottom: 6px;
+    background: #f7fafd;
+    transition: all 0.15s;
+  }
+  .emp-manage-item:hover { border-color: rgba(30,95,168,0.3); }
+  .emp-manage-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .emp-manage-info { flex: 1; }
+  .emp-manage-name { font-size: 13px; font-weight: 700; color: var(--navy); }
+  .emp-manage-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .emp-manage-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-edit {
+    padding: 4px 11px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-edit:hover { background: #f0f4f8; }
+  .btn-del {
+    padding: 4px 11px;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--red);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-del:hover { background: #fef2f2; }
+  .btn-add-emp {
+    width: 100%;
+    padding: 10px;
+    border: 2px dashed var(--border);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    margin-bottom: 16px;
+  }
+  .btn-add-emp:hover { border-color: var(--blue); background: rgba(30,95,168,0.04); }
+
+  /* 입력 폼 */
+  .emp-form {
+    background: #f0f4f8;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .emp-form.open { display: block; }
+  .emp-form h3 { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .fg { display: flex; flex-direction: column; gap: 3px; }
+  .fg label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .fg input, .fg select, .fg textarea {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: #fff;
+    outline: none;
+  }
+  .fg input:focus, .fg select:focus { border-color: var(--blue); }
+  .fg textarea { resize: vertical; min-height: 50px; }
+  .fg.full { grid-column: 1 / -1; }
+  .form-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  .btn-cancel-form {
+    padding: 7px 16px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .btn-save-form {
+    padding: 7px 18px;
+    border: none;
+    border-radius: 7px;
+    background: var(--navy);
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-save-form:hover { background: var(--blue); }
+
+  /* 코드 출력 */
+  .code-section {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+  .code-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .code-section-head h3 { font-size: 13px; font-weight: 700; color: var(--navy); }
+  .code-section-head p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .code-box {
+    background: #1a2332;
+    color: #a8d8a8;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 14px 16px;
+    border-radius: 9px;
+    overflow-x: auto;
+    max-height: 220px;
+    overflow-y: auto;
+    white-space: pre;
+  }
+  .btn-copy {
+    padding: 6px 14px;
+    border: 1px solid var(--blue);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--blue);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .btn-copy:hover { background: var(--blue); color: #fff; }
+  .copy-done { background: var(--green) !important; border-color: var(--green) !important; color: #fff !important; }
+  #printArea { display: none; }
+  @media print {
+    body > *:not(#printArea) { display: none !important; }
+    #printArea {
+      display: block !important;
+      padding: 20px;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #1a2332;
+    }
+    .print-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .print-meta { font-size: 11px; color: #6b7c93; margin-bottom: 16px; }
+    .print-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .print-table th {
+      background: #0f2342;
+      color: white;
+      padding: 7px 10px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .print-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #d1dce8;
+      vertical-align: middle;
+      font-size: 11px;
+    }
+    .print-table tbody tr:nth-child(even) td { background: #f7fafd; }
+    .print-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+    .pb-active  { background: #d1fae5; color: #065f46; }
+    .pb-return  { background: #dbeafe; color: #1e40af; }
+    .pb-pending { background: #fef3c7; color: #92400e; }
+    .pb-end     { background: #f1f5f9; color: #64748b; }
+    .print-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      background: #e8f0fe;
+      padding: 5px 10px;
+      margin-top: 12px;
+      margin-bottom: 0;
+      border-left: 3px solid #1e5fa8;
+    }
+  }
+
+  /* ── MAIN LAYOUT ─────────────────────────── */
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 16px 60px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* ── SIDEBAR ─────────────────────────────── */
+  .sidebar {
+    position: sticky;
+    top: 92px;
+  }
+
+  .sidebar-card {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    padding: 16px 18px;
+    color: white;
+  }
+  .sidebar-header h2 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    opacity: 0.85;
+    text-transform: uppercase;
+  }
+
+  .leave-list {
+    padding: 5px;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .leave-list::-webkit-scrollbar { width: 4px; }
+  .leave-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .leave-btn {
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.18s ease;
+    line-height: 1.35;
+    margin-bottom: 1px;
+  }
+  .leave-btn:hover {
+    background: rgba(30,95,168,0.07);
+    color: var(--blue);
+  }
+  .leave-btn.active {
+    background: linear-gradient(135deg, rgba(30,95,168,0.12), rgba(0,194,255,0.08));
+    color: var(--blue);
+    font-weight: 700;
+    border-left: 3px solid var(--blue);
+    padding-left: 7px;
+  }
+  .leave-btn .icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+  }
+  .leave-btn .tag {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .tag-paid { background: #d1fae5; color: #065f46; }
+  .tag-unpaid { background: #fee2e2; color: #991b1b; }
+  .tag-mixed { background: #fef3c7; color: #92400e; }
+  .tag-special { background: #ede9fe; color: #5b21b6; }
+
+  /* ── CONTENT ─────────────────────────────── */
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── INFO CARD ───────────────────────────── */
+  .info-card {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: fadeUp 0.3s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .info-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .info-header .big-icon {
+    font-size: 32px;
+  }
+  .info-header h2 {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .info-header .meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .meta-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.9);
+  }
+  .meta-badge.paid { background: rgba(16,185,129,0.3); border-color: rgba(16,185,129,0.5); }
+  .meta-badge.unpaid { background: rgba(239,68,68,0.3); border-color: rgba(239,68,68,0.5); }
+  .meta-badge.mixed { background: rgba(245,158,11,0.3); border-color: rgba(245,158,11,0.5); }
+
+  .info-body {
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .field {
+    background: #f7fafd;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    transition: box-shadow 0.2s;
+  }
+  .field:hover { box-shadow: 0 2px 12px rgba(30,95,168,0.08); }
+  .field.full { grid-column: 1 / -1; }
+  .field-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .field-label::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 12px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .field-value {
+    font-size: 13.5px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.65;
+    white-space: pre-line;
+  }
+  .field-value strong { color: var(--blue); }
+
+  /* Notes field */
+  .field.notes-field {
+    background: #fffbf0;
+    border-color: #fcd34d;
+  }
+  .field.notes-field .field-label { color: #92400e; }
+  .field.notes-field .field-label::before { background: var(--yellow); }
+  .field.notes-field .field-value { font-size: 13px; color: #78350f; }
+
+  /* Procedure field */
+  .field.proc-field {
+    background: #f0f9ff;
+    border-color: #bae6fd;
+  }
+  .field.proc-field .field-label { color: #0c4a6e; }
+  .field.proc-field .field-label::before { background: var(--accent); }
+
+  .proc-steps {
+    counter-reset: step;
+  }
+  .proc-step {
+    display: flex;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(186,230,253,0.5);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .proc-step:last-child { border-bottom: none; }
+  .proc-step .step-num {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    background: var(--blue);
+    color: white;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .proc-step .step-num.sub { background: var(--muted); font-size: 10px; }
+
+  /* ── STATUS CARD ─────────────────────────── */
+  .status-card {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .status-header {
+    background: linear-gradient(135deg, #064e3b, #065f46);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .status-header h3 { color: white; font-size: 15px; font-weight: 700; }
+  .status-header p { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 2px; }
+  .status-body { padding: 20px 24px; overflow-x: auto; }
+
+  /* 요약 배지 */
+  .summary-pills {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .s-pill {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+  }
+  .s-pill.active  { background: #d1fae5; color: #065f46; }
+  .s-pill.return  { background: #dbeafe; color: #1e40af; }
+  .s-pill.pending { background: #fef3c7; color: #92400e; }
+  .s-pill.end     { background: #f1f5f9; color: #64748b; }
+
+  /* 직원 테이블 */
+  .emp-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 860px; }
+  .emp-table thead tr {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: white;
+  }
+  .emp-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .emp-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text);
+    line-height: 1.5;
+    white-space: normal;
+    word-break: break-word;
+    max-width: 220px;
+  }
+  /* 줄바꿈 안되는 컬럼 */
+  .emp-table td.name-col   { white-space: nowrap; font-weight: 700; min-width: 60px; max-width: none; }
+  .emp-table td.empno-col  { white-space: nowrap; min-width: 80px; max-width: none; font-size:12px; color:var(--muted); }
+  .emp-table td.join-col   { white-space: nowrap; min-width: 80px; max-width: none; font-size:12px; }
+  .emp-table td.return-col { white-space: nowrap; min-width: 80px; max-width: none; font-size:12px; font-family:monospace; }
+  /* 줄바꿈 되는 컬럼 */
+  .emp-table td.process-col { max-width: 160px; }
+  .emp-table td.reason-col  { max-width: 120px; }
+  .emp-table td.period-col  { max-width: 240px; line-height: 1.6; }
+  .emp-table td.key-col     { max-width: 100px; font-size:12px; }
+  .emp-table td.note-col    { max-width: 200px; font-size:12px; color:var(--muted); }
+  .emp-table tbody tr:last-child td { border-bottom: none; }
+  .emp-table tbody tr:hover td { background: #f7fafd; }
+  .emp-table tbody tr:nth-child(even) td { background: #fafbfd; }
+  .emp-table tbody tr:nth-child(even):hover td { background: #f0f4f8; }
+
+  .status-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .sb-active  { background: #d1fae5; color: #065f46; }
+  .sb-return  { background: #dbeafe; color: #1e40af; }
+  .sb-pending { background: #fef3c7; color: #92400e; }
+  .sb-end     { background: #f1f5f9; color: #64748b; }
+
+  .no-emp {
+    text-align: center;
+    padding: 30px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+
+
+  /* ── RESPONSIVE ──────────────────────────── */
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+    .leave-list { max-height: 200px; }
+    .info-body { grid-template-columns: 1fr; }
+    .field.full { grid-column: 1; }
+    .checklist-header { flex-direction: column; align-items: flex-start; }
+    .checklist-controls { width: 100%; }
+    .worker-input { flex: 1; }
+  }
+
+  /* ── EMPTY STATE ─────────────────────────── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .es-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .empty-state p { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-icon">📋</div>
+    <div>
+      <h1>HR 휴직 관리 도우미</h1>
+      <p>Creator: CFAO M 조율리</p>
+    </div>
+    <div class="header-right">
+      <button class="bell-btn" id="bellBtn" onclick="toggleAlarm()" title="복귀 임박 알림">
+        🔔
+        <span class="bell-badge" id="bellBadge" style="display:none">0</span>
+      </button>
+      <button class="bell-btn" onclick="toggleReport()" title="주간 보고 현황" style="font-size:16px">📊</button>
+      <button class="export-btn" onclick="openManager()">👤 직원 관리</button>
+      <button class="export-btn" onclick="exportPDF()">🖨 PDF Export</button>
+      <button class="export-btn" style="background:rgba(16,185,129,0.2);border-color:rgba(16,185,129,0.4);color:#6ee7b7" onclick="downloadHTML()">💾 파일 다운로드</button>
+      <div class="header-badge">11가지 유형</div>
+    </div>
+  </div>
+</header>
+
+<!-- 알람 팝업 -->
+<div class="alarm-popup" id="alarmPopup">
+  <div class="alarm-head">
+    <span>🔔 복귀 임박 (1주일 이내)</span>
+    <button onclick="toggleAlarm()" style="background:none;border:none;color:white;cursor:pointer;font-size:14px;font-weight:700">✕</button>
+  </div>
+  <div class="alarm-body" id="alarmBody"></div>
+</div>
+
+<!-- 주간 보고 팝업 -->
+<div class="alarm-popup" id="reportPopup" style="width:480px">
+  <div class="alarm-head" style="background:linear-gradient(135deg,#0f2342,#1e5fa8)">
+    <span>📊 주간 인원 현황</span>
+    <button onclick="toggleReport()" style="background:none;border:none;color:white;cursor:pointer;font-size:14px;font-weight:700">✕</button>
+  </div>
+  <div class="alarm-body" style="padding:12px 14px">
+    <!-- 총원 입력 (항상 표시) -->
+    <div class="report-total-input">
+      <label>총원 입력:</label>
+      <input type="number" id="totalInput" placeholder="478"
+        onkeydown="if(event.key==='Enter'){event.stopPropagation();calcReport()}">
+      <button class="btn-calc" onclick="event.stopPropagation();calcReport()">계산</button>
+    </div>
+    <!-- 표 영역 (계산 후 표시) -->
+    <div id="reportTableArea" style="display:none">
+      <div style="text-align:right;font-size:11px;font-weight:700;color:var(--muted);font-family:monospace;margin-bottom:4px" id="reportDate"></div>
+      <table class="report-tbl">
+        <thead>
+          <tr>
+            <th rowspan="2">총원</th>
+            <th rowspan="2">정상출근</th>
+            <th rowspan="2">열외자</th>
+            <th colspan="4">열외자 세부 사항</th>
+          </tr>
+          <tr>
+            <th class="sub">육아휴직</th>
+            <th class="sub">장기병가</th>
+            <th class="sub">가족돌봄</th>
+            <th class="sub">기타</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="bold" id="r-total">-</td>
+            <td class="bold" id="r-normal">-</td>
+            <td id="r-out">-</td>
+            <td id="r-육아">-</td>
+            <td id="r-병가">-</td>
+            <td id="r-돌봄">-</td>
+            <td id="r-기타">-</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="report-note" id="r-note"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="layout">
+
+    <!-- ── SIDEBAR ── -->
+    <div class="sidebar">
+      <!-- 탭 -->
+      <div style="display:flex;gap:0;margin-bottom:10px">
+        <button class="side-tab active" id="tab-leave" onclick="switchTab('leave')">휴직·휴가 조회</button>
+        <button class="side-tab" id="tab-history" onclick="switchTab('history')">📂 종료 이력</button>
+      </div>
+
+      <!-- 휴직종류 목록 -->
+      <div id="pane-leave">
+        <div class="sidebar-card">
+          <div class="sidebar-header">
+            <h2>휴직 · 휴가 종류</h2>
+          </div>
+          <div class="leave-list" id="leaveList"></div>
+        </div>
+      </div>
+
+      <!-- 종료 이력 -->
+      <div id="pane-history" style="display:none">
+        <div class="sidebar-card">
+          <div class="sidebar-header"><h2>종료 이력 검색</h2></div>
+          <div style="padding:8px">
+            <input id="historySearch" type="text" placeholder="이름 또는 사번 검색..."
+              style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;outline:none"
+              oninput="renderHistory()">
+          </div>
+          <div id="historyList" style="padding:4px 6px;max-height:calc(100vh - 220px);overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CONTENT ── -->
+    <div class="content">
+      <!-- Info Card -->
+      <div class="info-card" id="infoCard">
+        <div class="empty-state">
+          <div class="es-icon">👈</div>
+          <h3>휴직 종류를 선택하세요</h3>
+          <p>왼쪽 목록에서 조회하고 싶은 휴직/휴가 종류를 클릭하면<br>상세 정보가 바로 표시됩니다.</p>
+        </div>
+      </div>
+
+      <!-- Status Card -->
+      <div class="status-card" id="statusCard" style="display:none">
+        <div class="status-header">
+          <div>
+            <h3 id="statusTitle">직원 현황</h3>
+            <p id="statusSubtitle"></p>
+          </div>
+        </div>
+        <div class="status-body">
+          <div class="summary-pills" id="summaryPills"></div>
+          <div id="empTableWrap"></div>
+        </div>
+      </div>
+
+      <!-- 종료 이력 상세 카드 -->
+      <div class="status-card" id="historyCard" style="display:none">
+        <div class="status-header" style="background:linear-gradient(135deg,#374151,#4b5563)">
+          <div>
+            <h3 id="historyTitle">📂 종료 이력</h3>
+            <p id="historySubtitle">이름 또는 사번으로 검색하세요</p>
+          </div>
+        </div>
+        <div class="status-body">
+          <!-- 이력 상세 테이블 -->
+          <div id="historyTableWrap" style="margin-bottom:16px"></div>
+
+          <!-- 추가 버튼 -->
+          <button class="btn-add-emp" onclick="openHistoryForm(null)">+ 종료 이력 추가</button>
+
+          <!-- 이력 입력 폼 -->
+          <div class="emp-form" id="historyForm">
+            <h3 id="historyFormTitle">종료 이력 추가</h3>
+            <div class="form-grid">
+              <div class="fg"><label>이름</label><input id="hf-name" placeholder="홍길동"></div>
+              <div class="fg"><label>사번</label><input id="hf-empno" placeholder="EMP-001"></div>
+            </div>
+            <div class="form-grid" style="margin-top:10px">
+              <div class="fg"><label>휴직 종류</label><select id="hf-leaveId"></select></div>
+              <div class="fg"><label>입사일</label><input id="hf-joinDate" placeholder="2020-01-06"></div>
+            </div>
+            <div class="form-grid-3" style="margin-top:10px">
+              <div class="fg"><label>담당공정</label><input id="hf-process" placeholder="Final assembly"></div>
+              <div class="fg"><label>사유</label><input id="hf-reason" placeholder="육아휴직"></div>
+              <div class="fg"><label>기간</label><input id="hf-period" placeholder="2024.01.01~2025.01.01"></div>
+            </div>
+            <div class="form-grid" style="margin-top:10px">
+              <div class="fg"><label>복귀일</label><input id="hf-returnDate" placeholder="2025-01-02"></div>
+              <div class="fg"><label id="hf-keyDateLabel">수술일/출산예정일</label><input id="hf-keyDate" placeholder="해당 없으면 빈칸"></div>
+            </div>
+            <div class="fg full" style="margin-top:10px">
+              <label>비고</label>
+              <textarea id="hf-note" placeholder="추가 사항 입력... (줄바꿈 가능)" style="min-height:60px"></textarea>
+            </div>
+            <div class="form-btns">
+              <button class="btn-cancel-form" onclick="closeHistoryForm()">취소</button>
+              <button class="btn-save-form" onclick="saveHistoryEmp()">저장</button>
+            </div>
+          </div>
+
+          <!-- 코드 출력 -->
+          <div class="code-section" id="historyCodeSection" style="display:none">
+            <div class="code-section-head">
+              <div>
+                <h3>📋 GitHub에 붙여넣기할 코드</h3>
+                <p>아래 코드를 복사 → GitHub index.html에서 기존 employees 배열 전체와 교체하세요</p>
+              </div>
+              <button class="btn-copy" id="historyCopyBtn" onclick="copyHistoryCode()">복사</button>
+            </div>
+            <div class="code-box" id="historyCodeBox"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 직원 관리 모달 -->
+<div class="modal-overlay" id="managerModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h2>👤 직원 현황 관리</h2>
+        <p>직원 추가/수정 후 아래 코드를 복사해서 GitHub에 붙여넣기 하세요</p>
+      </div>
+      <button class="modal-close" onclick="closeManager()">✕ 닫기</button>
+    </div>
+    <div class="modal-body">
+      <!-- 직원 목록 -->
+      <div class="emp-manage-list" id="empManageList"></div>
+      <button class="btn-add-emp" onclick="openForm(null)">+ 직원 추가</button>
+
+      <!-- 입력 폼 -->
+      <div class="emp-form" id="empForm">
+        <h3 id="formTitle">직원 추가</h3>
+        <div class="form-grid">
+          <div class="fg">
+            <label>이름</label>
+            <input id="f-name" placeholder="홍길동">
+          </div>
+          <div class="fg">
+            <label>사번</label>
+            <input id="f-empno" placeholder="EMP-001">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:10px">
+          <div class="fg">
+            <label>휴직 종류</label>
+            <select id="f-leaveId"></select>
+          </div>
+          <div class="fg">
+            <label>상태</label>
+            <select id="f-status">
+              <option value="active">휴직중</option>
+              <option value="return">복귀예정</option>
+              <option value="pending">대기중</option>
+              <option value="end">종료</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-3" style="margin-top:10px">
+          <div class="fg">
+            <label>입사일</label>
+            <input id="f-joinDate" placeholder="2020-01-06">
+          </div>
+          <div class="fg">
+            <label>담당공정</label>
+            <input id="f-process" placeholder="Final assembly">
+          </div>
+          <div class="fg">
+            <label>사유</label>
+            <input id="f-reason" placeholder="육아휴직">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:10px">
+          <div class="fg">
+            <label>기간</label>
+            <input id="f-period" placeholder="2025.01.01~2026.01.01">
+          </div>
+          <div class="fg">
+            <label>복귀예정일</label>
+            <input id="f-returnDate" placeholder="2026-01-02">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:10px">
+          <div class="fg">
+            <label id="f-keyDateLabel">수술일 / 출산예정일</label>
+            <input id="f-keyDate" placeholder="해당 없으면 빈칸">
+          </div>
+        </div>
+        <div class="fg full" style="margin-top:10px">
+          <label>비고</label>
+          <textarea id="f-note" placeholder="추가 사항 입력... (줄바꿈 가능)" style="min-height:70px"></textarea>
+        </div>
+        <div class="form-btns">
+          <button class="btn-cancel-form" onclick="closeForm()">취소</button>
+          <button class="btn-save-form" onclick="saveEmp()">저장</button>
+        </div>
+      </div>
+
+      <!-- 코드 출력 -->
+      <div class="code-section">
+        <div class="code-section-head">
+          <div>
+            <h3>📋 GitHub에 붙여넣기할 코드</h3>
+            <p>아래 코드를 복사 → GitHub index.html에서 기존 employees 배열 전체와 교체하세요</p>
+          </div>
+          <button class="btn-copy" id="copyBtn" onclick="copyCode()">복사</button>
+        </div>
+        <div class="code-box" id="codeBox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PDF 인쇄 영역 -->
+<div id="printArea"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+const leaves = [
+  {
+    id: 1,
+    icon: '🤰',
+    name: '임산부 단축근로 + 주간고정',
+    salary: '유급', salaryType: 'paid',
+    approval: '전무님\n(주간고정만 신청 시 부서장)',
+    condition: '임신 12주 이내(초기) or 32주 이후(후기) 임신한 근로자\n임산부 보호 통지서 작성 필요 (EHS, HR)',
+    deadline: '단축근로: 신청일 최소 3일 전\n주간고정: 즉시 가능',
+    duration: '12주 이내(=11주차까지), 36주 이후 (2시간 단축)',
+    documents: '임신주수 확인 서류 중 1\n• 건강보험임신출산진료비지급신청서\n• 임신진단서(주수 기재)',
+    notes: '※ 임금 감소 없이 하루 2시간 단축근로\n※ 연차 사용 시 단축근무 아닌 기준으로 차감 (WD 연차 등록 1개)\n※ 고위험 산모: 임신 전체기간 2시간 단축 가능 (질병코드 확인 필수)',
+    steps: [
+      { num:'사전', text:'면담 전 확인: 계약직유무 / 증빙 / 사용이력 / 재직기간' },
+      { num:'1', text:'작업자 면담 (사전 증빙 지참)\n  - 기간 확인, 앞/뒤 2hr 결정, EHS 면담 필요 여부' },
+      { num:'2', text:'EHS 임산부 보호 동의서 작성 요청 (단축 시작일 = 제출일자)' },
+      { num:'3', text:'이메일 승인: operator 소속 팀장 (증빙 첨부)' },
+      { num:'4', text:'이메일 승인: 부서장 (첨부X)' },
+      { num:'5', text:'이메일 승인: 전무님 (첨부X)' },
+      { num:'6', text:'HR: 모든 증빙 제출 (임신확인서, EHS 보호통지서)' },
+      { num:'7', text:'현장 알람' },
+      { num:'8', text:'작업자 알람: 기간 및 출근방식 안내' },
+    ],
+  },
+  {
+    id: 2, icon: '🤱', name: '출산전후휴가 (산전/산후)',
+    salary: '유급', salaryType: 'paid',
+    approval: '전무님',
+    condition: '출산을 앞둔 직원\n(출산예정일 기준 45일 전에 보통 사용)',
+    deadline: '신청일자 기준 30일 전',
+    duration: '출산 예정일로부터 전후 90일 (미숙아 100일 / 다태아 120일)\n* 출산 후 45일 이상 보장 필수\n* 출산일이 반드시 휴가기간에 포함되어야 함',
+    documents: '건강보험 임신·출산 진료비 지급 신청서\n(미숙아 출산: 인큐베이터 등 추가 증빙 필요)',
+    notes: '※ 육아휴직 연결 시: 가족관계증명서(주민번호 끝까지) WD 등록 필요\n※ 반드시 전부 소진해야 함\n※ 고위험 산모는 질병코드 확인 필수 (산 전/후 휴가 분리 사용 가능)',
+    steps: [
+      { num:'1', text:'작업자 면담 (사전 증빙 지참)' },
+      { num:'2', text:'현장 사전 알람' },
+      { num:'3', text:'이메일 승인: 팀장 → 부서장 → 전무님' },
+      { num:'4', text:'HR: 모든 증빙 제출' },
+      { num:'5', text:'현장 최종 알람' },
+      { num:'6', text:'작업자 알람' },
+    ],
+  },
+  {
+    id: 3, icon: '👶', name: '배우자 출산휴가',
+    salary: '유급', salaryType: 'paid',
+    approval: '승인 필요 없음 (결재프로세스 미해당)',
+    condition: '배우자가 출산한 경우\n배우자 출산일로부터 120일 이내 신청 가능',
+    deadline: '출산일로부터 120일 이내',
+    duration: '최대 20일 (주말/공휴일 미포함)\n최대 3회 분할 가능 (4구간)\n★ 필히 20일 전부 소진',
+    documents: '출생증명서',
+    notes: '※ Counting: 실근무일자\n※ 법적으로 전부 소진해야 함\n※ 차주 휴가원에 작성 시 Supervisor 신청 불필요\n  (단, 연차기간·주말 등 출근 없는 경우는 Supervisor 통해 신청)',
+    steps: [
+      { num:'1', text:'작업자 면담 (전화/문자 가능)\n  - 기간 확인, 증빙서류 확인' },
+      { num:'2', text:'현장 알림메일 발송 (첨부X)' },
+      { num:'3', text:'이유정 사원에게 증빙 제출' },
+    ],
+  },
+  {
+    id: 4, icon: '👩‍👧', name: '육아휴직',
+    salary: '유급(조건부) - 3개월간 통상임금 80% 이후 통상임금 50%', salaryType: 'mixed',
+    approval: '전무님',
+    condition: '재직기간 6개월 이상\n만 8세 이하 또는 초등학교 2학년 이하 자녀 양육 부모 (입양 포함)',
+    deadline: '신청일자 기준 30일 전 (연장도 동일)',
+    duration: '자녀 1명당 기본 1년 (최대 3회 분할: 최초1회+분할2회)\n* 요건 충족 시 6개월 연장 가능\n  요건1. 동일한 자녀에 대해 부모가 각각 3개월 이상 사용\n  요건2. 한부모 중증장애아동 부모인 경우\n* 계약직: 계약 종료일까지만 사용 가능\n* 고위험 산모: 출산 전(산후 휴가 사용 전) 육아휴직 미리 사용 가능',
+    documents: '가족관계증명서 (주민번호 뒷자리 필수)\n* 연장 시: 배우자 3개월이상 육아휴직확인서 필수',
+    notes: '※ 면담 전 확인: 계약직유무/증빙/사용이력/재직기간\n※ Counting: 월력기준, 주말/공휴일 포함\n※ 조기복귀(산후1년미만/유산·사산): 시간외 1일2hr/1주6hr/1년150hr 초과불가',
+    steps: [
+      { num:'사전', text:'면담 전: 계약직유무 / 증빙 / 사용이력 / 재직기간 확인' },
+      { num:'1', text:'작업자 면담 (사전 증빙 지참)\n  - 기간확인, 계약직 유무 확인' },
+      { num:'2', text:'현장 사전 알람' },
+      { num:'3', text:'이메일 승인: 팀장 (증빙 첨부)' },
+      { num:'4', text:'이메일 승인: 부서장 (첨부X)' },
+      { num:'5', text:'이메일 승인: 전무님 (첨부X)' },
+      { num:'6', text:'HR 최종 송부 (전체 증빙 첨부)' },
+      { num:'복귀', text:'복귀 1개월 전 복귀 조 확인 (박영식 직장님 / 연장 여부 문의 X)' },
+    ],
+  },
+  {
+    id: 5, icon: '🕐', name: '육아기 단축근로',
+    salary: '유급(조건부)', salaryType: 'mixed',
+    approval: '전무님',
+    condition: '재직기간 6개월 이상\n만 12세 이하 자녀 (육아휴직 기간이 남은 경우 사용 가능)',
+    deadline: '신청일자 기준 30일 전',
+    duration: '자녀 1명당 최대 2년 (횟수 제한 없음)\n주 15hr ~ 35hr 근무, 최소 3개월\n※ 육아휴직 미사용 기간은 ×2로 계산\n  (예: 육아휴직 6개월 사용: 육아기 근로시간 단축 1년 + 미사용 육아휴직 6개월*2 (1년) = 총 2년 사용 가능)',
+    documents: '등본 or 가족관계증명서 (주민번호 뒷자리 필수)\n근로계약서 별도 작성 필요',
+    notes: '※ 연차 사용 시 8시간 기준 차감 (예. 연차 사용 → 8시간 기준으로 WD 1개 반영)\n※ 주말 특근 불가\n※ 근무시간 변경 시 신규 계약서 작성 필요\n※ 부모 모두 근로자인 경우 기간 겹치지 않게 해야 함',
+    steps: [
+      { num:'사전', text:'면담 전: 계약직유무 / 증빙 / 사용이력 / 재직기간 확인' },
+      { num:'1', text:'작업자 면담 (사전 증빙 지참)\n  - 기간확인, 계약직 유무 확인' },
+      { num:'2', text:'현장 사전 알람' },
+      { num:'3', text:'이메일 승인: 팀장 (증빙 첨부)' },
+      { num:'4', text:'이메일 승인: 부서장 (첨부X)' },
+      { num:'5', text:'이메일 승인: 전무님 (첨부X)' },
+      { num:'6', text:'HR 최종 송부 (전체 증빙 첨부)' },
+      { num:'복귀', text:'복귀 1개월 전 복귀 조 확인 (박영식 직장님 / 연장 여부 문의 X)' },
+    ],
+  },
+  {
+    id: 6, icon: '🏥', name: '장기병가',
+    salary: '심의회 결정', salaryType: 'mixed',
+    approval: 'HR 윤민수부장님',
+    condition: '치료 기간 4주 이상 기재된 진단서',
+    deadline: '진단서 일자 기준',
+    duration: '최소 4주 / 유급 최대 180일\n유급 인정 시: 60일 간격 60% → 50% → 40% → 이후 무급',
+    documents: '장기병가 신청서 + 병원 진단서\n(진단서 외 효력 없음! 소견서 불가!)',
+    notes: '※ 연장 시: 복귀 최소 1주일 전 진단서 필요 (치료기간 명기 필수)\n※ Counting: 주말/공휴일 포함',
+    steps: [
+      { num:'사전', text:'작업자 면담 - 내용/병명/기간/증빙 확인, 신청서 서명' },
+      { num:'1', text:'현장 사전 공유' },
+      { num:'2', text:'이메일 승인: 팀장 (신청서 + 진단서 첨부) → 전무님' },
+      { num:'3', text:'심의회 요청: HR (신청서 + 진단서 첨부)' },
+      { num:'4', text:'유/무급 결과 현장 안내' },
+    ],
+  },
+  {
+    id: 7, icon: '👨‍👩‍👧', name: '가족돌봄휴가',
+    salary: '무급', salaryType: 'unpaid',
+    approval: '부서장 (결재프로세스 미해당)',
+    condition: '가족의 질병, 사고, 노령, 자녀양육의 목적',
+    deadline: '신청일자 기준 (당일 신청 OK)',
+    duration: '연 최대 10일 (일 단위 사용 가능)',
+    documents: '등본 or 가족관계증명서 (주민번호 앞자리만)',
+    notes: '※ 주민번호 앞자리만 표기되어도 증빙 효력 발생\n※ Counting: 실근무일자 (주말/공휴일 미포함)',
+    steps: [
+      { num:'1', text:'작업자 면담' },
+      { num:'2', text:'이메일 승인: operator 소속 팀장 (증빙 첨부)' },
+      { num:'3', text:'이메일 승인: 부서장 (첨부X)' },
+      { num:'4', text:'현장 알람 (첨부X)' },
+      { num:'5', text:'이유정 사원 - WD 반영 요청' },
+    ],
+  },
+  {
+    id: 8, icon: '🏠', name: '가족돌봄휴직',
+    salary: '무급', salaryType: 'unpaid',
+    approval: '부서장 (결재프로세스 미해당)',
+    condition: '가족의 질병/사고/노령 등 돌봄 필요시',
+    deadline: '신청일자 기준 30일 전',
+    duration: '연 최장 90일 (1회 최소 30일 이상)',
+    documents: '등본 or 가족관계증명서 + 가족의 진단서\n(주민번호 앞자리만)',
+    notes: '※ Counting: 연속하여 주말/공휴일 포함 (휴직)',
+    steps: [
+      { num:'1', text:'작업자 면담' },
+      { num:'2', text:'이메일 승인: operator 소속 팀장 (증빙 첨부)' },
+      { num:'3', text:'이메일 승인: 부서장 (첨부X)' },
+      { num:'4', text:'현장 알람 (첨부X)' },
+      { num:'5', text:'이유정 사원 - WD 반영 요청' },
+    ],
+  },
+  {
+    id: 9, icon: '🌸', name: '산후 1년 미만 근로자 (유·사산 포함)',
+    salary: '-', salaryType: 'special',
+    approval: '조기복귀: 전무님 / 수유시간: 담당 팀장님',
+    condition: '산후 1년이 지나지 않은 근로자 (유산·사산 포함)',
+    deadline: '-',
+    duration: '산후 1년간 보호조치 적용',
+    documents: '-',
+    notes: '※ 시간외 근로, 특근, 야간근무 불가 + 주간고정 필수\n※ 수유시간 허용 (근로자 신청 시) - 1일 2회 각 30분 단축 / 유급\n※ 유산·사산도 산후로 판단: 유산일로부터 1년간 시간외/특근/야간 불가, 주간고정 필수\n※ 수유시간: 자녀 care 목적으로도 사용 가능',
+    steps: [
+      { num:'즉시', text:'주간고정 즉시 적용' },
+      { num:'1', text:'시간외/특근/야간 불가 현장 공지' },
+    ],
+  },
+  {
+    id: 10, icon: '🕊', name: '유산 및 사산 휴가',
+    salary: '유급', salaryType: 'paid',
+    approval: '비밀유지 - 승인 절차 없음 (WD 증빙만)',
+    condition: '유산, 사산한 근로자',
+    deadline: '유산·사산한 날부터 계산',
+    duration: '• 11주이내: 10일\n• 12~15주: 10일\n• 16~21주: 30일\n• 22~27주: 60일\n• 28주이상: 90일\n(주말/공휴일 포함, 분할 없이 연속 사용 필수)',
+    documents: '유산 확인서',
+    notes: '🔒 비밀유지 의무! 절대 보안 유지!\n※ 분할 없이 연속 사용 필수\n※ 유산일로부터 1년간: 주간고정 필수, 시간외/특근/야간 불가\n※ Counting: 월력기준, 주말/공휴일 포함, 청구일자부터 계산',
+    steps: [
+      { num:'1', text:'작업자 면담: 증빙, 일자 확인' },
+      { num:'2', text:'현장 공유 (비밀유지 강조)' },
+      { num:'3', text:'이유정 사원 - WD 반영 요청' },
+    ],
+  },
+  {
+    id: 11, icon: '💊', name: '난임치료 휴가',
+    salary: '유급(2일)+무급', salaryType: 'mixed',
+    approval: '내부 조율',
+    condition: '신청하면 가능 (내부 조율)',
+    deadline: '당일 승인 어려움 → 익일부터 조율',
+    duration: '최대 6일 (주말/공휴일 미포함)',
+    documents: '난임치료 확인서 (진료 후 제출)',
+    notes: '※ 치료 서류는 진료 후 사후 제출 요청\n※ 승인 후 그날 바로 답장 필수',
+    steps: [
+      { num:'1', text:'작업자 면담 (일자 조율, 증빙 확인)' },
+      { num:'2', text:'팀장님 보고' },
+    ],
+  },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentLeave = null;
+
+// ── 직원 현황 데이터 ── 이 배열만 수정하면 됩니다 ──────────────────────────
+// 휴직종류별 dateLabel: '수술일' | '출산예정일' | '없음'
+const DATE_LABEL = {
+  1:  '없음',        // 임산부 단축근로
+  2:  '출산예정일',  // 출산전후휴가
+  3:  '출산예정일',  // 배우자 출산휴가
+  4:  '출산예정일',  // 육아휴직
+  5:  '출산예정일',  // 육아기 단축근로
+  6:  '수술일',      // 장기병가
+  7:  '없음',        // 가족돌봄휴가
+  8:  '없음',        // 가족돌봄휴직
+  9:  '출산예정일',  // 산후 1년 미만
+  10: '없음',        // 유산 및 사산
+  11: '없음',        // 난임치료
+  12: '없음',        // 연차없는사람
+};
+
+// ★★★ 직원 현황 데이터 — 여기에 직원을 추가/수정하세요 ★★★
+// 형식: { leaveId, name, joinDate, process, reason, period, returnDate, keyDate, note, status }
+// status: 'active'(휴직중) | 'return'(복귀예정) | 'pending'(대기중) | 'end'(종료)
+const employees = [
+  {
+    leaveId: 6,           // 장기병가
+    name: '지현민',
+    empNo: '65303146',
+    joinDate: '2008-04-22',
+    process: 'Packaging',
+    reason: '뇌경색',
+    period: '2026.03.16~2026.04.26 (6주)\n2026.04.27~2026.05.31 (5주) 1차연장',
+    returnDate: '2026-06-01',
+    keyDate: '',
+    note: '유급',
+    status: 'active',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이예승',
+    empNo: '65306092',
+    joinDate: '2017-08-08',
+    process: 'Termination/Shrink/Insertion',
+    reason: '좌골직장농양',
+    period: '2026.04.18~2026.05.15 (4주)',
+    returnDate: '2026-05-18',
+    keyDate: '2026-04-18',
+    note: '무급',
+    status: 'active',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '양소영',
+    empNo: '65307263',
+    joinDate: '2024-12-04',
+    process: 'Stack bonding',
+    reason: '자궁 수술',
+    period: '2026.04.08~2026.06.02 (8주)',
+    returnDate: '2026-06-04',
+    keyDate: '2026-04-08',
+    note: '무급',
+    status: 'active',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이찬휘',
+    empNo: '65302905',
+    joinDate: '2007-05-28',
+    process: 'Technician',
+    reason: '허리디스크 수술',
+    period: '2026.04.07~2026.06.05 (2개월)',
+    returnDate: '2026-06-08',
+    keyDate: '2026-04-08',
+    note: '유급',
+    status: 'active',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이효원',
+    empNo: '65306736',
+    joinDate: '2022-03-28',
+    process: 'Termination/Shrink/Insertion',
+    reason: '발목 수술',
+    period: '2026.01.27 ~ 2026.04.26 (3개월)\n2026.04.27~2026.07.23 (88일) - 4차',
+    returnDate: '2026-07-24',
+    keyDate: '1/29/2026\n2/26/2026',
+    note: '무급',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김지훈',
+    empNo: '65306457',
+    joinDate: '2020-01-06',
+    process: 'Final assembly',
+    reason: '아이 돌봄',
+    period: '2025.12.08~2026.06.07 (6개월)',
+    returnDate: '2026-06-08',
+    keyDate: '',
+    note: '첫째 육아휴직 6개월 사용',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '조민기',
+    empNo: '65306133',
+    joinDate: '2017-12-19',
+    process: 'Final assembly',
+    reason: '아이 돌봄',
+    period: '2026.01.14~2026.06.13 (5개월)',
+    returnDate: '2026-06-15',
+    keyDate: '',
+    note: '첫째 육아휴직 5개월 사용',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '허현주',
+    empNo: '65307388',
+    joinDate: '2025-06-16',
+    process: 'Phase1&2공정',
+    reason: '아이 돌봄',
+    period: '2025.12.16~2026.06.15 (6개월)-계약기간',
+    returnDate: '2026-06-16',
+    keyDate: '',
+    note: '셋짜자녀 육아휴직 9개월 사용 건/ 계약만료 시 육아휴직 자동 종료',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '정이용',
+    empNo: '65306350',
+    joinDate: '2019-06-03',
+    process: 'Test',
+    reason: '아이 양육',
+    period: '2025-01-13~2026-07-12(18개월)',
+    returnDate: '2026-07-13',
+    keyDate: '',
+    note: '육아휴직 1년 사용 + 배우자 육아휴직으로 인한 6개월 생성',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '정성훈',
+    empNo: '65306476',
+    joinDate: '2020-02-10',
+    process: 'Final assembly',
+    reason: '아이 돌봄',
+    period: '2026.02.23~2026.08.22 (6개월)',
+    returnDate: '2026-08-24',
+    keyDate: '',
+    note: '첫째 자녀에대하여 육아휴직 6개월 사용',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이남경',
+    empNo: '65305933',
+    joinDate: '2016-10-04',
+    process: 'Admin',
+    reason: '아이 돌봄',
+    period: '2025.12.08~2026.09.05 (약 9개월)',
+    returnDate: '2026-09-07',
+    keyDate: '',
+    note: '첫째자녀 잔여 2개월 29일 + 배우자 육아휴직 6개월 = 약9개월',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '최샛별',
+    empNo: '65306204',
+    joinDate: '2018-05-28',
+    process: 'Admin',
+    reason: '첫째 임신',
+    period: '2025.07.02~2025.09.29(90일)\n2025-09-30~2026-09-29(12개월)',
+    returnDate: '2026-09-30',
+    keyDate: '2025-08-06',
+    note: '개인연차 7일소진 (6/23~7/1), 첫째 출산으로 인한 육아휴직 12개월 전량 사용',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '최윤서',
+    empNo: '65306601',
+    joinDate: '2021-08-09',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2025.09.01~2025.12.09(100일)\n2025.12.24~2026.12.23(12개월)',
+    returnDate: '2026-12-24',
+    keyDate: '2025-09-01(응급 출산)',
+    note: '개인 연차: 2025.12.10, 11, 12, 15, 16, 17, 18, 19, 22, 23 (10일)',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '강진수',
+    empNo: '65306345',
+    joinDate: '2019-06-03',
+    process: 'Final assembly',
+    reason: '아이 돌봄',
+    period: '2026.01.20~2027.01.19 (1년)',
+    returnDate: '2027-01-20',
+    keyDate: '',
+    note: '첫째 자녀 육아휴직 1년 사용건',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '문주연',
+    empNo: '65306150',
+    joinDate: '2018-01-22',
+    process: 'Termination/Shrink/Insertion',
+    reason: '둘째 임신',
+    period: '2025.10.30~2026.01.27(90일)\n2026.01.28~2027.01.27(12개월)',
+    returnDate: '2027-01-28',
+    keyDate: '2025-11-12',
+    note: '2025.10.30~2026.01.27(산 전후 휴가90일) / 2026.01.28~2027.01.27(육아휴직 1년)',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김태은',
+    empNo: '65306207',
+    joinDate: '2018-08-27',
+    process: 'Stack bonding&Termination',
+    reason: '첫째 임신',
+    period: '2025.12.01~2026.02.28(90일)\n2026.03.01~2027.02.28(12개월)',
+    returnDate: '2027-03-02',
+    keyDate: '2025-12-02(제왕절개)',
+    note: '2025.12.01~2026.02.28(산 전후 휴가90일) / 2026.03.01~2027.02.28(육아휴직 1년)',
+    status: 'active',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '권은영',
+    empNo: '65306166',
+    joinDate: '2018-02-26',
+    process: 'Final/PCB',
+    reason: '첫째 임신',
+    period: '2025.12.02~2026.01.14(44일): 산전 단독 건\n2026.03.19~2026.05.03(46일): 산후\n2026.05.04~2027.05.03(1년)',
+    returnDate: '2027-05-04',
+    keyDate: '2026-04-01',
+    note: '첫째 육아휴직 1년 사용',
+    status: 'active',
+  },
+  {
+    leaveId: 10,           // 유산 및 사산 휴가
+    name: '손세영',
+    empNo: '65306214',
+    joinDate: '2023-01-03',
+    process: 'Phase 1 & 2 공정',
+    reason: '유산',
+    period: '2026-04-24 ~ 2026-05-03',
+    returnDate: '2026-05-04',
+    keyDate: '2026-04-24',
+    note: '',
+    status: 'active',
+  },
+  {
+    leaveId: 8,           // 가족돌봄휴직
+    name: '윤현정',
+    empNo: '65302914',
+    joinDate: '2007-08-21',
+    process: 'Wrapping& Fusing',
+    reason: '모친 간호',
+    period: '2026.04.01~2026.04.30 (30일)',
+    returnDate: '2026-05-01',
+    keyDate: '',
+    note: '',
+    status: 'active',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '최세란',
+    empNo: '65303495',
+    joinDate: '2009.06.29',
+    process: 'Stack bonding',
+    reason: '아이 돌봄',
+    period: '2026.04.03~2026.05.30 (58일)',
+    returnDate: '2026-06-01',
+    keyDate: '',
+    note: '화, 수 정상 근무 (주 16시간 근무)',
+    status: 'active',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '김한솔',
+    empNo: '65306072',
+    joinDate: '2017.07.10',
+    process: 'IQC/OQC',
+    reason: '아이 돌봄',
+    period: '2026.03.03~2026.06.02 (3개월)',
+    returnDate: '2026-06-04',
+    keyDate: '',
+    note: '월, 수 정상근무 (주 16시간 근무)\n수유시간 허용: 03/04, 09, 11 근무시간:09:30~17:00',
+    status: 'active',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '최라정',
+    empNo: '65303171',
+    joinDate: '2008-05-13',
+    process: 'Sub& Final&PCB',
+    reason: '아이돌봄',
+    period: '2025-02-24~2026-07-23(18개월)',
+    returnDate: '2026-07-24',
+    keyDate: '',
+    note: '수,목 근무 / 6개월 사용 + 12개월 연장=총18개월',
+    status: 'active',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '김혜영',
+    empNo: '65303666',
+    joinDate: '2010-03-22',
+    process: 'Phase 1 & 2 공정',
+    reason: '아이돌봄',
+    period: '2026.02.01~2026.02.28 (1개월)\n추가 육단근2026.04.01~2026.08.31 (5개월)',
+    returnDate: '2026-09-01',
+    keyDate: '',
+    note: '화, 수 정상 근무 (주 16시간 근무)',
+    status: 'active',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '김미현',
+    empNo: '65305441',
+    joinDate: '2015-06-01',
+    process: 'Sub& Final&PCB',
+    reason: '아이돌봄',
+    period: '2025.11.17~2026.11.16(12개월)',
+    returnDate: '2026-11-17',
+    keyDate: '',
+    note: '첫째자녀 사용건/ 화, 수 정상 근무',
+    status: 'active',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '원수정',
+    empNo: '65306858',
+    joinDate: '2022-08-02',
+    process: 'Wrapping& Fusing',
+    reason: '아이돌봄',
+    period: '2025.06.16~2025.11.28(약 6개월)\n2025.11.29~2026.11.28(12개월) 연장',
+    returnDate: '2026-11-30',
+    keyDate: '',
+    note: '화, 수 근무',
+    status: 'active',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '이재현',
+    empNo: '65303385',
+    joinDate: '2008-11-10',
+    process: 'Sub& Final&PCB',
+    reason: '아이돌봄',
+    period: '2024.12.16~2026.12.15(2년)',
+    returnDate: '2026-12-16',
+    keyDate: '',
+    note: '첫째자녀/ 1년 신청 후 1년 연장 건/ 주간:1000~1500/ 야간: 2100~0130\n주 20시간 근무/ 육휴 미사용분 1년 중 6개월을 육단근 12개월로 전환',
+    status: 'active',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '이수빈',
+    empNo: '65306438',
+    joinDate: '2019-11-18',
+    process: 'Stack bonding&Termination',
+    reason: '아이 돌봄',
+    period: '2025.12.23~2026.12.22 (12개월)',
+    returnDate: '2026-12-23',
+    keyDate: '',
+    note: '첫째자녀/ 화, 목 정상 근무(주16시간)_2026.04.07까지 주간고정 필요',
+    status: 'active',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '김지은',
+    empNo: '65305083',
+    joinDate: '2014-01-13',
+    process: 'Final assembly',
+    reason: '아이 돌봄',
+    period: '2026.04.16~2027.04.15 (1년)',
+    returnDate: '2027-04-16',
+    keyDate: '',
+    note: '첫째자녀 / 수, 목 근무',
+    status: 'active',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '권주화',
+    empNo: '65307097',
+    joinDate: '2023-11-15',
+    process: 'Stack bonding',
+    reason: '임신',
+    period: '2026.04.20 ~ 2026.05.24(12주 이내분)',
+    returnDate: '2026-05-26',
+    keyDate: '2026-11-30',
+    note: '근무 시간: 08:30~15:00 (뒤 2시간 단축)',
+    status: 'active',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '손세영',
+    empNo: '65306214',
+    joinDate: '2023-01-03',
+    process: 'Phase 1 & 2 공정',
+    reason: '유산',
+    period: '2026-05-04 ~ 2027-04-23(1년)',
+    returnDate: '2027-04-24',
+    keyDate: '2026-04-24',
+    note: '4/24 유산 / 5/4/2026부터 시작예정',
+    status: 'active',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이은혜',
+    empNo: '65306149',
+    joinDate: '2018-01-22',
+    process: 'Stack bonding Shrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-12-13 ~ 2023-12-15(3일)',
+    returnDate: '2023-12-18',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '아이돌봄',
+    period: '2025.12.29~2026.01.02(4일)',
+    returnDate: '2026.01.05',
+    keyDate: '',
+    note: '(25년도) 10일 중 8일 사용 / (26년도) 10일 중 1일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김지은',
+    empNo: '65305083',
+    joinDate: '2014-01-13',
+    process: 'Final assembly',
+    reason: '아버지 손가락 절단',
+    period: '2020/10/28 ~ 2020/11/10 (10일)',
+    returnDate: '2020-11-11',
+    keyDate: '',
+    note: '10/26~27 개인연차',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '강대웅',
+    empNo: '65302857',
+    joinDate: '2005-10-12',
+    process: 'Technician',
+    reason: '아이돌봄',
+    period: '2025-02-03~2025-02-14(10일)',
+    returnDate: '',
+    keyDate: '',
+    note: '10일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '류준우',
+    empNo: '65303178',
+    joinDate: '2008-05-13',
+    process: 'Stack bonding',
+    reason: '부친 병간호',
+    period: '2025.10.27~2025.11.04(7일)',
+    returnDate: '2025-11-05',
+    keyDate: '',
+    note: '10일 중 10 전량 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김주형',
+    empNo: '65304395',
+    joinDate: '2011-03-28',
+    process: '2차 포장룸',
+    reason: '배우자 병원 동행',
+    period: '2025.12.15(1일)',
+    returnDate: '2025.12.16',
+    keyDate: '',
+    note: '10일 중 10일 전량 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이남경',
+    empNo: '65305933',
+    joinDate: '2016-10-04',
+    process: 'Admin',
+    reason: '모친 병원 동행',
+    period: '2025.12.03(1일)',
+    returnDate: '2025.12.04',
+    keyDate: '',
+    note: '10일 중 10일 전량 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '박소연',
+    empNo: '65306390',
+    joinDate: '2019-08-12',
+    process: 'Stack bonding&\nTermination',
+    reason: '가족돌봄휴가',
+    period: '2024-05-27 ~ 2024-06-10(10일)',
+    returnDate: '2024-06-11',
+    keyDate: '',
+    note: '10일 중 10일 전량 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '정은숙',
+    empNo: '65302823',
+    joinDate: '2004-09-08',
+    process: 'Termination/Shrink/Insertion',
+    reason: '가족돌봄',
+    period: '2025-02-11~2025-02-13(3일)',
+    returnDate: '',
+    keyDate: '',
+    note: '10일 중 3일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '류준우',
+    empNo: '65303178',
+    joinDate: '2008-05-13',
+    process: 'Stack bonding',
+    reason: '부친 병간호',
+    period: '2025.09.17~2025.09.19(3일)',
+    returnDate: '2025-09-22',
+    keyDate: '',
+    note: '10일 중 3일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '박민현',
+    empNo: '65304855',
+    joinDate: '2013-01-02',
+    process: 'Sensor wrapping&Stack IQC',
+    reason: '아이 돌봄',
+    period: '2024-02-27~2024-02-29(3일)',
+    returnDate: '2024-03-04',
+    keyDate: '',
+    note: '10일 중 3일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이재영',
+    empNo: '65306347',
+    joinDate: '2019-06-03',
+    process: 'Wrapping& Fusing',
+    reason: '남편 병원 동행',
+    period: '2025.09.10~2025.09.12(3일)',
+    returnDate: '2025-09-15',
+    keyDate: '',
+    note: '10일 중 3일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '정예주',
+    empNo: '65306554',
+    joinDate: '2021-02-01',
+    process: 'Stack bonding&Termination',
+    reason: '가족돌봄',
+    period: '2025-06-02~2025-06-06(10일 중 3일 사용)',
+    returnDate: '2025-06-09',
+    keyDate: '',
+    note: '10일 중 3일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김미현',
+    empNo: '65305441',
+    joinDate: '2015-06-01',
+    process: 'Sub& Final&PCB',
+    reason: '가족돌봄휴가',
+    period: '2024-05-28 ~ 2024-05-31(4일)',
+    returnDate: '2024-06-03',
+    keyDate: '',
+    note: '10일 중 3일 전량 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '정미정A',
+    empNo: '65305173',
+    joinDate: '2014-04-07',
+    process: 'Fusing/Wrapping',
+    reason: '아이돌봄',
+    period: '2024-10-15 ~ 2024-10-19(4일)',
+    returnDate: '',
+    keyDate: '',
+    note: '10일 중 4일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김주형',
+    empNo: '65304395',
+    joinDate: '2011-03-28',
+    process: '2차 포장룸',
+    reason: '아이돌봄',
+    period: '2025.07.28 ~ 2025.08.01(5일)',
+    returnDate: '2025-08-04',
+    keyDate: '',
+    note: '10일 중 5일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '박민현',
+    empNo: '65304855',
+    joinDate: '2013-01-02',
+    process: '',
+    reason: '아이돌봄',
+    period: '2025-08-04 ~ 2025-08-08(5일)',
+    returnDate: '2025-08-11',
+    keyDate: '',
+    note: '10일 중 5일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '아이돌봄',
+    period: '2025-08-01 ~ 2025-08-07(5일)',
+    returnDate: '2025-08-08',
+    keyDate: '',
+    note: '10일 중 5일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김주형',
+    empNo: '65304395',
+    joinDate: '2011-03-28',
+    process: '2차 포장룸',
+    reason: '배우자 임신 내원 동행',
+    period: '2025-08-11, 14 (2일)',
+    returnDate: '2025-08-12, 18',
+    keyDate: '',
+    note: '10일 중 7일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김주형',
+    empNo: '65304395',
+    joinDate: '2011-03-28',
+    process: '2차 포장룸',
+    reason: '배우자 병원 동행',
+    period: '2025.10.20(1일)',
+    returnDate: '2025-10-21',
+    keyDate: '',
+    note: '10일 중 8일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이남경',
+    empNo: '65305933',
+    joinDate: '2016-10-04',
+    process: 'Admin',
+    reason: '가족돌봄',
+    period: '2025.07.04, 2025.07.28~29, 2025.08.01(4일)',
+    returnDate: '2025-08-04',
+    keyDate: '',
+    note: '10일 중 8일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '문주연',
+    empNo: '65306150',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '아이돌봄',
+    period: '2025.07.28 ~ 2025.08.04(6일)',
+    returnDate: '2025-08-05',
+    keyDate: '',
+    note: '10일 중 8일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '나은미',
+    empNo: '65302949',
+    joinDate: '2007-09-03',
+    process: 'Stack bonding&Termination',
+    reason: '부모 병간호',
+    period: '2024-01-23 ~ 2024-02-02(9일)',
+    returnDate: '2024-02-05',
+    keyDate: '',
+    note: '10일 중 9일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김주형',
+    empNo: '65304395',
+    joinDate: '2011-03-28',
+    process: '2차 포장룸',
+    reason: '배우자 병원 동행',
+    period: '2025.12.01(1일)',
+    returnDate: '2025.12.02',
+    keyDate: '',
+    note: '10일 중 9일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이남경',
+    empNo: '65305933',
+    joinDate: '2016-10-14',
+    process: 'Admin',
+    reason: '모친 병간호',
+    period: '2025.11.07(1일)',
+    returnDate: '2025-11-10',
+    keyDate: '',
+    note: '10일 중 9일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이진선',
+    empNo: '65306151',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '가족돌봄',
+    period: '2022-11-28 ~ 2022-12-02(5일)',
+    returnDate: '2022-12-05',
+    keyDate: '',
+    note: '5일(무급)',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '문주연',
+    empNo: '65306150',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '아이돌봄',
+    period: '2023-12-22 ~ 2023-12-29(5일)',
+    returnDate: '2024-01-02',
+    keyDate: '',
+    note: '가족돌봄휴가 0개 남음',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '아이돌봄',
+    period: '2023-12-26 ~ 2023-12-28(3일)',
+    returnDate: '2023-12-29',
+    keyDate: '',
+    note: '가족돌봄휴가 0개 남음',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '강다현',
+    empNo: '퇴사',
+    joinDate: '2023-01-04',
+    process: 'Stack bonding Shrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-11-29(1일)',
+    returnDate: '2023-11-30',
+    keyDate: '',
+    note: '가족돌봄휴가 1일 남음',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '강다현',
+    empNo: '퇴사',
+    joinDate: '2023-01-04',
+    process: 'Stack bonding Shrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-11-01 ~ 2023-11-03(3일)',
+    returnDate: '2023-11-06',
+    keyDate: '',
+    note: '가족돌봄휴가 2일 남음',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이은혜',
+    empNo: '65306149',
+    joinDate: '2018-01-22',
+    process: 'Final assembly',
+    reason: '초등학교',
+    period: '2020/12/21 ~ 2020/12/22 (2일)',
+    returnDate: '2020-12-23',
+    keyDate: '',
+    note: '근무조 변경 거절',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '최선희',
+    empNo: '65305225',
+    joinDate: '2017-06-26',
+    process: 'Stack bonding\nShrink& Insertion',
+    reason: '아이돌봄',
+    period: '2022/05/20 ~ 2022/05/25',
+    returnDate: '2022-05-26',
+    keyDate: '',
+    note: '아이 코로나로 아이볼사람 無',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '최세란',
+    empNo: '65303495',
+    joinDate: '2009-06-29',
+    process: 'Stack bonding',
+    reason: '가족돌봄',
+    period: '2025.2.21~28(6일)',
+    returnDate: '',
+    keyDate: '',
+    note: '아이돌봄',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이남경',
+    empNo: '65305933',
+    joinDate: '2016-10-04',
+    process: 'Admin',
+    reason: '가족돌봄',
+    period: '3일(2024-12-26, 30 / 2025-01-02)',
+    returnDate: '',
+    keyDate: '',
+    note: '아이돌봄',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이남경',
+    empNo: '65305933',
+    joinDate: '2016-10-04',
+    process: 'Admin',
+    reason: '가족돌봄',
+    period: '2025.2.24, 27, 28(3일)',
+    returnDate: '',
+    keyDate: '',
+    note: '아이돌봄',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '문주연',
+    empNo: '65306150',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '가족돌봄',
+    period: '6일(2024-12-26~2025-01-03)',
+    returnDate: '',
+    keyDate: '',
+    note: '아이돌봄',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '문주연',
+    empNo: '65306150',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '가족돌봄',
+    period: '2022/08/02 ~ 2022/08/16(10일)',
+    returnDate: '2022-08-17',
+    keyDate: '',
+    note: '애기 폐렴',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김미선',
+    empNo: '퇴사',
+    joinDate: '2016-03-02',
+    process: 'Wrapping& Fusing',
+    reason: '첫째돌봄',
+    period: '2022/05/16 ~ 2022/05/20(5일)',
+    returnDate: '2022-05-23',
+    keyDate: '',
+    note: '어머니 코로나로 아이볼사람 無',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '한상미',
+    empNo: '65302900',
+    joinDate: '2007-04-02',
+    process: 'Fusing',
+    reason: '아이돌봄',
+    period: '2025-04-17~2025-04-30(10일)',
+    returnDate: '2025-05-01',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '나은미',
+    empNo: '65302949',
+    joinDate: '2007-09-03',
+    process: 'Stack/Termi',
+    reason: '초등학교',
+    period: '2020/06/29 ~ 2020/07/10 (10일)',
+    returnDate: '2020-07-13',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '최라정',
+    empNo: '65303171',
+    joinDate: '2008-03-15',
+    process: 'Stack/Termi/Sh',
+    reason: '가족 확진 돌봄',
+    period: '2022/03/29 ~ 2022/04/01 (4일)',
+    returnDate: '2022-04-11',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '최라정',
+    empNo: '65303171',
+    joinDate: '2008-06-19',
+    process: 'Final assembly',
+    reason: '아이돌봄',
+    period: '2024-06-19 00:00:00',
+    returnDate: '2024-06-20',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '배지윤',
+    empNo: '65303585',
+    joinDate: '2011-03-08',
+    process: 'Test',
+    reason: '가족 확진 돌봄',
+    period: '2022/03/24 ~ 2022/03/29 (4일)\n2022/04/06 ~ 2022/04/08 (3일)',
+    returnDate: '2022-04-11',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김혜영',
+    empNo: '65303666',
+    joinDate: '2010-03-22',
+    process: 'Final assembly',
+    reason: '어린이집 휴원',
+    period: '2020/03/16 ~ 2020/03/20 (5일)',
+    returnDate: '2020-03-23',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김혜영',
+    empNo: '65303666',
+    joinDate: '2010-03-22',
+    process: 'Final assembly',
+    reason: '어린이집 휴원',
+    period: '2020/05/11 ~ 2020/05/15 (5일)',
+    returnDate: '2020-05-18',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김은미',
+    empNo: '65303668',
+    joinDate: '2010-03-22',
+    process: 'Sub& Final&PCB',
+    reason: '아이돌봄',
+    period: '2023-08-21 ~ 2023-08-25(5일)',
+    returnDate: '2023-08-28',
+    keyDate: 'o',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '최선희',
+    empNo: '65305225',
+    joinDate: '2017-06-26',
+    process: 'Stack/Termi/Sh',
+    reason: '어린이집 휴원',
+    period: '2020/04/20 ~ 2020/04/24 (5일)',
+    returnDate: '2020-04-27',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '최선희',
+    empNo: '65305225',
+    joinDate: '2017-06-26',
+    process: 'Stack/Termi/Sh',
+    reason: '자녀돌봄',
+    period: '2021/09/10 ~ 2021/09/28 (10일)',
+    returnDate: '2021-09-29',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '박영진',
+    empNo: '65305977',
+    joinDate: '2017-01-02',
+    process: 'Final assembly',
+    reason: '어린이집 휴원',
+    period: '2020/04/06 ~ 2020/04/10 (5일)',
+    returnDate: '2020-04-13',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '박영진',
+    empNo: '65305977',
+    joinDate: '2014-04-07',
+    process: 'Final assembly',
+    reason: '부인 입원',
+    period: '2021/05/31 ~ 2021/06/11 (10일)',
+    returnDate: '2021-06-14',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '조민기',
+    empNo: '65306133',
+    joinDate: '2017-12-19',
+    process: 'Sub& Final&\nPCB',
+    reason: '가족돌봄',
+    period: '2022-12-20 ~ 2022-12-26(5일)',
+    returnDate: '2022-12-27',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이은혜',
+    empNo: '65306149',
+    joinDate: '2018-01-22',
+    process: 'Final assembly',
+    reason: '초등학교',
+    period: '2020/05/11 ~ 2020/05/15 (5일)',
+    returnDate: '2020-05-18',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이은혜',
+    empNo: '65306149',
+    joinDate: '2018-01-22',
+    process: 'Final assembly',
+    reason: '초등학교',
+    period: '2020/06/23, 6/25, 6/26 (3일)',
+    returnDate: '2020-06-27',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이은혜',
+    empNo: '65306149',
+    joinDate: '2023-01-04',
+    process: 'Final assembly',
+    reason: '아이돌봄',
+    period: '2023-07-31 ~ 2023-08-04(5일)',
+    returnDate: '2023-08-07',
+    keyDate: 'o',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '문주연',
+    empNo: '65306150',
+    joinDate: '2018-01-22',
+    process: 'Stack bonding\nShrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-07-31 ~ 2023-08-04(5일)',
+    returnDate: '2023-08-07',
+    keyDate: 'o',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '가족돌봄',
+    period: '2022-12-26 ~ 2022-12-30(5일)',
+    returnDate: '2023-01-01',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '가족돌봄',
+    period: '2023-02-27 ~ 2023-02-28(2일)',
+    returnDate: '2023-03-02',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Stack bonding\nShrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-07-25 ~ 2023-07-31(5일)',
+    returnDate: '2023-08-01',
+    keyDate: 'o',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '원수정',
+    empNo: '65306858',
+    joinDate: '2022-08-02',
+    process: 'Wrapping& Fusing',
+    reason: '아이돌봄',
+    period: '2023-10-23 ~ 2023-10-26(4일)',
+    returnDate: '2023-10-27',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '박윤희',
+    empNo: '65306903',
+    joinDate: '2022-11-22',
+    process: 'Shrink, Insertion, Termination',
+    reason: '부모병간호',
+    period: '2025-04-07~2025-04-11(5일)',
+    returnDate: '2025-04-14',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '강다현',
+    empNo: '퇴사',
+    joinDate: '2023-01-04',
+    process: 'Stack bonding\nShrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-07-26 ~ 2023-07-28(3일)',
+    returnDate: '2023-07-31',
+    keyDate: 'o',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '강다현',
+    empNo: '퇴사',
+    joinDate: '2023-01-04',
+    process: 'Stack bonding Shrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-10-06(1일)',
+    returnDate: '2023-10-10',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '강다현',
+    empNo: '퇴사',
+    joinDate: '2023-01-04',
+    process: 'Stack bonding Shrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-10-23(1일)',
+    returnDate: '2023-10-24',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '김윤지',
+    empNo: '퇴사',
+    joinDate: '2018-01-22',
+    process: 'Stack/Termi/Sh',
+    reason: '어머니 허리수술 간호',
+    period: '2021/02/05 ~ 2021/02/22 (10일)',
+    returnDate: '2021-02-23',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '이현정',
+    empNo: '퇴사',
+    joinDate: '2014-02-03',
+    process: 'Final assembly',
+    reason: '어린이집 휴원',
+    period: '2020/03/23 ~ 2020/04/03 (10일)',
+    returnDate: '2020-04-06',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '정수정',
+    empNo: '퇴사',
+    joinDate: '2016-07-18',
+    process: 'Shrink& Insertion',
+    reason: '가족돌봄',
+    period: '2022-12-26 ~ 2022-12-30(5일)',
+    returnDate: '2023-01-01',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '정수정',
+    empNo: '퇴사',
+    joinDate: '2016-07-18',
+    process: 'Shrink& Insertion',
+    reason: '가족돌봄',
+    period: '2022-10-17~2022-10-19(3일)',
+    returnDate: '2022-10-20',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '정수정',
+    empNo: '퇴사',
+    joinDate: '2016-07-18',
+    process: 'Shrink& Insertion',
+    reason: '가족돌봄',
+    period: '2023-02-27 ~ 2023-02-28(2일)',
+    returnDate: '2023-03-02',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 7,           // 가족돌봄휴가
+    name: '정수정',
+    empNo: '퇴사',
+    joinDate: '2016-07-18',
+    process: 'Stack bonding\nShrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-07-31 ~ 2023-08-04(5일)',
+    returnDate: '2023-08-07',
+    keyDate: 'o',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 8,           // 가족돌봄휴직
+    name: '천진현',
+    empNo: '65302817',
+    joinDate: '2004-06-07',
+    process: 'Stack/Termi/Sh',
+    reason: '어머니 돌봄',
+    period: '2021/11/02 ~ 2021/12/01 (1개월)',
+    returnDate: '2021-12-02',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 8,           // 가족돌봄휴직
+    name: '최윤서',
+    empNo: '65306601',
+    joinDate: '2021-08-09',
+    process: 'IQC/OQC',
+    reason: '가족돌봄휴직',
+    period: '2025-02-04~2025-05-04(90일)',
+    returnDate: '2025-05-07',
+    keyDate: '2025-02-03',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 8,           // 가족돌봄휴직
+    name: '김진미',
+    empNo: '65307252',
+    joinDate: '2024-11-20',
+    process: 'P8 Preparation',
+    reason: '가족돌봄휴직',
+    period: '2025-05-07 ~ 2025-05-09(3일)',
+    returnDate: '',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 8,           // 가족돌봄휴직
+    name: '이현정',
+    empNo: '퇴사',
+    joinDate: '2014-02-03',
+    process: 'Wrapping& Fusing',
+    reason: '아이돌봄',
+    period: '2025.07.21~2025.10.18(90일)',
+    returnDate: '2025.10.20',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 2,           // 출산전후휴가 (산전/산후)
+    name: '권은영',
+    empNo: '65306166',
+    joinDate: '2018-02-26',
+    process: 'Final/PCB',
+    reason: '유산위험',
+    period: '2025.12.01~2026.01.14',
+    returnDate: '2026.01.15',
+    keyDate: '2026.04.01',
+    note: '산전휴가 단독 사용 건',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '이현정',
+    empNo: '퇴사',
+    joinDate: '2014-02-03',
+    process: 'Wrapping& Fusing',
+    reason: '아이돌봄',
+    period: '2024-02-13 ~ 2024-11-12(9개월)',
+    returnDate: '',
+    keyDate: '',
+    note: '12개월 중 3개월 사용 / 아이 16년 12월생',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Stack bonding Shrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-08-07 ~ 2024-01-06(5개월)',
+    returnDate: '2024-01-08',
+    keyDate: '',
+    note: '12개월 중 5개월 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '김정순',
+    empNo: '퇴사',
+    joinDate: '2004-06-07',
+    process: 'Stack/Termi/Sh',
+    reason: '셋째돌봄',
+    period: '2021/12/09 ~ 2023/03/08 (15개월)',
+    returnDate: '2023-03-09',
+    keyDate: '',
+    note: '15개월 사용(일일 4시간근무)/22-7-29 퇴사',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '이현정',
+    empNo: '퇴사',
+    joinDate: '2014-02-03',
+    process: 'Wrapping& Fusing',
+    reason: '아이돌봄',
+    period: '2023-03-06 ~ 2023-06-05(3개월)',
+    returnDate: '2023-03-03',
+    keyDate: '',
+    note: '15개월 중 3개월 사용 / 아이 16년 12월생',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '배지윤',
+    empNo: '65303585',
+    joinDate: '2011-03-08',
+    process: 'Final assembly',
+    reason: '아이돌봄',
+    period: '2023-10-30 ~ 2024-12-29(1년 2개월)',
+    returnDate: '',
+    keyDate: '',
+    note: '16개월 중 12개월 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '임준수',
+    empNo: '65304854',
+    joinDate: '2013-01-02',
+    process: 'Final assembly',
+    reason: '아이돌봄',
+    period: '2023-07-09 ~ 2024-06-30(359일)',
+    returnDate: '2024-07-01',
+    keyDate: '',
+    note: '21개월 중 12개월 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '임준수',
+    empNo: '65304854',
+    joinDate: '2013-01-02',
+    process: 'Final assembly',
+    reason: '아이돌봄',
+    period: '2023-04-10 ~ 2023-07-08(3개월)',
+    returnDate: '2023-07-10',
+    keyDate: '',
+    note: '24개월 중 3개월 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '윤민정',
+    empNo: '65302866',
+    joinDate: '2006.02.06',
+    process: 'Wrapping& Fusing',
+    reason: '아이돌봄',
+    period: '2025.11.01~2025.12.31(2개월)',
+    returnDate: '',
+    keyDate: '',
+    note: '둘째자녀/ 2시간 단축근무/ 매일 출퇴근 각 1시간씩 단축',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '김현진A',
+    empNo: '65304853',
+    joinDate: '2013-01-02',
+    process: 'Sub& Final&PCB',
+    reason: '아이돌봄',
+    period: '2024-12-30~2025-05-10(약 4개월)',
+    returnDate: '',
+    keyDate: '',
+    note: '약 4개월 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '한지연A',
+    empNo: '65303175',
+    joinDate: '2008-05-13',
+    process: 'Stack bonding',
+    reason: '아이돌봄',
+    period: '2025.11.03~2026.01.02(3개월) 조기종료',
+    returnDate: '',
+    keyDate: '',
+    note: '월~수 정상근무/ 목요일 뒤 2시간 단축/ 금요일 근무X\n2025.11.03~2027.05.02(18개월)신청이나, 2026.01.02 조기 종료',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '박민현',
+    empNo: '65304855',
+    joinDate: '2013-01-02',
+    process: 'Sensor wrapping&Stack IQC',
+    reason: '아이돌봄',
+    period: '2023-11-27 ~ 2024-04-26(5개월)\n-- 기존 계약: 2023-11-27~2024-01-01\n-- 변경 계약: 2024-01-02~2024-04-26',
+    returnDate: '',
+    keyDate: '',
+    note: '육아기 단축근로 후 산, 전후 휴가 사용 예정\n기존: 화, 수, 목 각 5시간, Total 15시간  근무\n변경: 화, 수, 목, 금 각 4시간, Total 16시간 근무',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '김미현',
+    empNo: '65305441',
+    joinDate: '2015-06-01',
+    process: 'Sub& Final&PCB',
+    reason: '첫째 임신',
+    period: '2022-07-11 ~ 2022-08-21(6주)',
+    returnDate: '',
+    keyDate: '',
+    note: '임산주 12주이내 단축근무',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '나은미',
+    empNo: '65302949',
+    joinDate: '2007-09-03',
+    process: 'Stack bonding&Termination',
+    reason: '아이돌봄',
+    period: '2024-08-05 ~ 2025-09-04(13개월)',
+    returnDate: '',
+    keyDate: '',
+    note: '화, 수 근무(16)',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '김은미',
+    empNo: '65303668',
+    joinDate: '2010-03-22',
+    process: 'Sub& Final&PCB',
+    reason: '아이돌봄',
+    period: '2024-03-25 ~ 2024-12-24(9개월)\n2024-12-25~2025-03-24(3개월)',
+    returnDate: '',
+    keyDate: '',
+    note: '화, 수 근무(16) 모든 육아휴직 소진 / 아이 20년 12월생',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '이은혜',
+    empNo: '65306149',
+    joinDate: '2018-01-22',
+    process: 'Sub& Final&PCB',
+    reason: '아이돌봄',
+    period: '2025-02-24~2026-02-23(12개월)',
+    returnDate: '',
+    keyDate: '',
+    note: '화,수 근무 /1년 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 5,           // 육아기 단축근로
+    name: '윤민정',
+    empNo: '65302866',
+    joinDate: '2006-02-06',
+    process: 'Wrapping& Fusing',
+    reason: '아이돌봄',
+    period: '2023-04-24 ~ 2024-07-23(1년 3개월)\n2024-09-01 ~ 2024-12-31(4개월)',
+    returnDate: '',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '최세란',
+    empNo: '65303495',
+    joinDate: '2013-04-01',
+    process: 'Final assembly',
+    reason: '둘째 임신',
+    period: '2019/12/02 ~ 2020/11/30 (12개월)',
+    returnDate: '2020-12-02',
+    keyDate: '2019-12-27',
+    note: '12/1 개인연차',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김한솔',
+    empNo: '65306072',
+    joinDate: '2017-07-10',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2025.03.13~2025.05.30(79일)\n2025.06.02~2026.02.28(약 9개월)',
+    returnDate: '2026.03.04',
+    keyDate: '2025-03-14',
+    note: '12개월 중 9 개월사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김미현',
+    empNo: '65305441',
+    joinDate: '2015-06-01',
+    process: 'Stack bonding& Termination',
+    reason: '첫째 임신',
+    period: '2023-02-01 ~ 2024-02-01(12개월)',
+    returnDate: '2024-02-02',
+    keyDate: '',
+    note: '2/2, 2/5 일 연차 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Stack/Termi/Sh',
+    reason: '둘째 임신',
+    period: '2024-01-07 ~ 2025-03-05\n(육아휴직, 11개월 + 산전,후90일)',
+    returnDate: '2025-03-24',
+    keyDate: '2024-02-18',
+    note: '2025-03-06~21일 연차 신청 접수(사용 예정)',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이남경',
+    empNo: '65305933',
+    joinDate: '2016-10-04',
+    process: '',
+    reason: '둘째 임신',
+    period: '2022/06/07 ~ 2023/08/04(14개월)',
+    returnDate: '2023-08-05',
+    keyDate: '2022-06-20',
+    note: '4주전 건강검진 대상',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Stack/Termi/Sh',
+    reason: '첫째 임신',
+    period: '2021/08/23 ~ 2022/11/20 (15개월)',
+    returnDate: '2022-11-21',
+    keyDate: '2021-09-18',
+    note: '4주전 건강검진 대상',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '박혜정',
+    empNo: '퇴사',
+    joinDate: '2019-08-12',
+    process: 'Stack bonding&\nTermination',
+    reason: '첫째 임신',
+    period: '2022/06/13 ~ 2023/09/10(15개월)',
+    returnDate: '2023-09-11',
+    keyDate: '2022-07-20',
+    note: '4주전 건강검진 대상',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '문주연',
+    empNo: '65306150',
+    joinDate: '2018-01-22',
+    process: 'Stack/Termi/Sh',
+    reason: '첫째 임신',
+    period: '2021/06/22 ~ 2022/06/19 (12개월)',
+    returnDate: '2022-06-20',
+    keyDate: '2021-07-05',
+    note: 'COC 요청 2022-06-14',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이지은',
+    empNo: '65307268',
+    joinDate: '2017-06-26',
+    process: 'Shrink & Insertion',
+    reason: '첫째 임신',
+    period: '2022/05/11 ~ 2023/08/09(15개월)',
+    returnDate: '2023-08-10',
+    keyDate: '2022-05-28',
+    note: '개인연차 6일: 5/2~5/10\n4주전 건강검진 대상',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '정수정',
+    empNo: '퇴사',
+    joinDate: '2016-07-18',
+    process: 'Stack/Termi/Sh',
+    reason: '첫째 임신',
+    period: '2021/02/01 ~ 2022/04/12 (14개월)',
+    returnDate: '2022-04-13',
+    keyDate: '2021-03-04',
+    note: '개인연차 7일: 5/3~5/12, 복귀',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '박민현',
+    empNo: '65304855',
+    joinDate: '2013-01-02',
+    process: 'Sensor wrapping&Stack IQC',
+    reason: '첫째 임신',
+    period: '2022/05/09 ~ 2023/08/04(15개월)',
+    returnDate: '2023-08-05',
+    keyDate: '2022-06-08',
+    note: '개인연차 9일: 4/25~5/6\n4주전 건강검진 대상',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '강대웅',
+    empNo: '65302857',
+    joinDate: '2005-10-12',
+    process: 'Technician',
+    reason: '가족돌봄',
+    period: '2022/04/04 ~ 2023/04/03 (12개월)',
+    returnDate: '2023-04-04',
+    keyDate: '',
+    note: '건강검진 완료(8월)',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '박진영',
+    empNo: '퇴사',
+    joinDate: '2019-06-03',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2024-10-07 ~ 2025-01-30(약 4개월)',
+    returnDate: '',
+    keyDate: '2024-10-23',
+    note: '계약 종료 예정',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '전유나',
+    empNo: '퇴사',
+    joinDate: '2024-01-15',
+    process: 'Test',
+    reason: '아이 돌봄',
+    period: '2025-10-13~2026-01-14(계약기간까지)',
+    returnDate: '2026-01-14',
+    keyDate: '',
+    note: '계약기간까지 육아휴직 사용. 정규직 안된다면 퇴직원 작성 필요(계약만료 이전으로)',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이수빈',
+    empNo: '65306438',
+    joinDate: '2019-11-18',
+    process: 'Stack bonding&Termination',
+    reason: '첫째 임신',
+    period: '2025.03.24~2025.06.21(90일)\n\'2025.06.23~2025.12.22(6개월)',
+    returnDate: '2025.12.23 조기복귀',
+    keyDate: '2025-04-17',
+    note: '기 신청 2025.06.23~2026.06.22(12개월)이였으나 2025.12.23 조기 복귀\n2026.04.07까지 주간고정(사유: 산후 1년미만 상태로 복귀)',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '장선희',
+    empNo: '65303669',
+    joinDate: '2013-04-01',
+    process: 'Stack bonding&Termination',
+    reason: '아이돌봄',
+    period: '2024-03-04 ~ 2024-05-03(2개월)',
+    returnDate: '2024-05-07',
+    keyDate: '',
+    note: '둘 째 잔여 육아휴직 3개월',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '나은미',
+    empNo: '65302949',
+    joinDate: '2007-09-03',
+    process: 'Stack bonding&Termination',
+    reason: '아이돌봄',
+    period: '2024-02-19 ~ 2024-07-18(5개월)',
+    returnDate: '2024-07-19',
+    keyDate: '',
+    note: '둘 째 잔여 육아휴직 6개월',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '박민현',
+    empNo: '65304855',
+    joinDate: '2013-01-02',
+    process: 'Sensor wrapping&Stack IQC',
+    reason: '둘째 임신',
+    period: '2024-04-27 ~ 2025-07-25(15개월)',
+    returnDate: '2025-07-28',
+    keyDate: '2024-06-06',
+    note: '둘 째 출산으로 인한 육아휴직 12개월 전량 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김미현',
+    empNo: '65305441',
+    joinDate: '2015-06-01',
+    process: 'Sub& Final&PCB',
+    reason: '둘째 임신',
+    period: '2024-08-19~2025-11-16(15개월)',
+    returnDate: '2025-11-18',
+    keyDate: '2024-09-24',
+    note: '둘째 출산 전후 휴가 90일+육아휴직 9개월 사용+3개월 연장=총15개월',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김현진A',
+    empNo: '65304853',
+    joinDate: '2013.01.02',
+    process: 'Final assembly',
+    reason: '아이 돌봄',
+    period: '2025.12.29~2026.03.31 (약 3개월)',
+    returnDate: '2026.04.01',
+    keyDate: '',
+    note: '둘째자녀/ 약 3개월 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '황효정',
+    empNo: '65305885',
+    joinDate: '2016-05-16',
+    process: 'IQC/OQC',
+    reason: '가족돌봄',
+    period: '2022/05/23 ~ 2022/9/22(4개월)',
+    returnDate: '2022-09-23',
+    keyDate: '',
+    note: '성모병원 개인 건강검진 진행 필요',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김정순',
+    empNo: '퇴사',
+    joinDate: '2014-10-06',
+    process: 'Stack/Termi',
+    reason: '셋째 돌봄',
+    period: '2020/03/02 ~ 2020/03/31 (1개월)',
+    returnDate: '2020-04-01',
+    keyDate: '',
+    note: '연차 7-5개 2/19 오후 ~ 2/28',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김은미',
+    empNo: '65303668',
+    joinDate: '2010-03-22',
+    process: 'Sub& Final&PCB',
+    reason: '아이 양육',
+    period: '2025.03.25~2025.09.24(6개월)',
+    returnDate: '2025.10.13',
+    keyDate: '',
+    note: '육아휴직 6년 추가분 모두 소진',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김혜영',
+    empNo: '65303666',
+    joinDate: '2010-03-22',
+    process: 'Phase 1 & 2 공정',
+    reason: '아이돌봄',
+    period: '2026.03.01~2026.03.31 (1개월)',
+    returnDate: '2026.04.01',
+    keyDate: '',
+    note: '육아휴직 잔여 1개월 모두 소진 건',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김미선',
+    empNo: '퇴사',
+    joinDate: '2016-03-02',
+    process: 'Fusing',
+    reason: '',
+    period: '2019/06/10 ~ 2020/04/09 (10개월)',
+    returnDate: '2020-04-10',
+    keyDate: '',
+    note: '자녀 만5세 2번째 육아휴직',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김지은',
+    empNo: '65305083',
+    joinDate: '2019-11-18',
+    process: 'Final assembly',
+    reason: '첫째 임신',
+    period: '2025.05.20~2025.08.17(90일)\n\'2025.08.18~2026-04-16(약8개월)',
+    returnDate: '2026.04.16',
+    keyDate: '2025-06-05',
+    note: '조기 복직/ 04.16~05.27까지 주간고정+특근 불가(수유시간허용:퇴근1시간당기기)',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김소연',
+    empNo: '퇴사',
+    joinDate: '2022-08-02',
+    process: 'Stack bonding&Termination',
+    reason: '아이돌봄',
+    period: '2024-02-20 ~ 2024-08-01(약 5개월)',
+    returnDate: '계약종료',
+    keyDate: '',
+    note: '첫 육아휴직 잔여 12개월\n계약직은 계약기간까지 사용 가능함',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김채희',
+    empNo: '65306346',
+    joinDate: '2019-06-03',
+    process: 'Wrapping& Fusing',
+    reason: '첫 째 임신',
+    period: '2024.08.21~2024.11.18(90일)\n2024.11.19~2025.10.18(11개월)\n2025.10.19~2026.04.18(6개월)',
+    returnDate: '2026-04-20',
+    keyDate: '2024-09-10',
+    note: '첫 째 육아휴직 11개월 사용\n잔여1개월+ 남편 육아휴직으로 인한 5개월 추가 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '박해형',
+    empNo: '퇴사',
+    joinDate: '2018-02-26',
+    process: 'Final assembly',
+    reason: '첫 째 임신',
+    period: '2024-07-31 ~ 2025-10-28(15개월)',
+    returnDate: '퇴사예정10/28',
+    keyDate: '',
+    note: '첫 째 육아휴직 12개월 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '천원녕',
+    empNo: '퇴사',
+    joinDate: '2022-03-07',
+    process: 'Final assembly',
+    reason: '첫 째 아이돌봄',
+    period: '2024-05-27 ~ 2024-12-31',
+    returnDate: '계약종료',
+    keyDate: '',
+    note: '첫 째 육아휴직 8개월 사용, 퇴사',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이현정',
+    empNo: '퇴사',
+    joinDate: '2014-02-03',
+    process: 'Wrapping& Fusing',
+    reason: '첫 째 아이돌봄',
+    period: '2024-11-13 ~ 2025-02-10(약3개월)',
+    returnDate: '2025-02-11',
+    keyDate: '',
+    note: '첫 째 육아휴직 전량 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '최세란',
+    empNo: '65303495',
+    joinDate: '2013-04-01',
+    process: 'Final assembly',
+    reason: '아이돌봄',
+    period: '2024-02-26 ~ 2024-03-25(1개월)',
+    returnDate: '2024-03-26',
+    keyDate: '',
+    note: '첫 째 잔여 육아휴직 2개월',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김혜영',
+    empNo: '65303666',
+    joinDate: '2010-03-22',
+    process: 'Stack bonding&Termination',
+    reason: '아이돌봄',
+    period: '2024-03-04 ~ 2024-05-03(2개월)',
+    returnDate: '2024-05-07',
+    keyDate: '',
+    note: '첫 째 잔여 육아휴직 3개월',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '서다솜',
+    empNo: '65306435',
+    joinDate: '2019-11-18',
+    process: 'Stack IQC',
+    reason: '첫째 임신',
+    period: '2024-03-11 ~ 2025-06-08(15개월)\n2025-06-09 ~ 2025-09-08(3개월)',
+    returnDate: '2025-09-09',
+    keyDate: '2024-04-16',
+    note: '첫 째 출산으로 인한 육아휴직 12개월 전량 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '정수미',
+    empNo: '65306600',
+    joinDate: '2021-08-09',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2024.11.11~2026.02.18(15개월)\n2025.11.03 조기복직 희망',
+    returnDate: '2025-11-03',
+    keyDate: '2024-12-02',
+    note: '첫 쨰 육아휴직 12개월 사용 + 산- 전후 육아휴직 사이 개인연차 7일 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김경렬',
+    empNo: '65306193',
+    joinDate: '2018-04-11',
+    process: 'Test',
+    reason: '아이 돌봄',
+    period: '2025.11.17~2026.02.16 (3개월)',
+    returnDate: '2026-02-19',
+    keyDate: '',
+    note: '첫째 육아휴직 3개월 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '최세란',
+    empNo: '65303495',
+    joinDate: '2009.06.29',
+    process: 'Stack bonding',
+    reason: '아이 돌봄',
+    period: '2026.03.03~2026.04.02 (1개월)',
+    returnDate: '2026.04.07',
+    keyDate: '',
+    note: '첫째자녀 잔여 1개월 29일 중 1개월 사용/ 잔여 29일은 육단근 58일로 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김진한',
+    empNo: '퇴사',
+    joinDate: '2007-08-27',
+    process: 'Technician',
+    reason: '첫째\n둘째',
+    period: '2020/03/01 ~ 2021/02/28 (12개월)\n2021/03/01 ~ 2022/02/28 (12개월)',
+    returnDate: '2022-03-02',
+    keyDate: '',
+    note: '퇴사',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이현정',
+    empNo: '퇴사',
+    joinDate: '2014-02-03',
+    process: 'Wrapping& Fusing',
+    reason: '아이돌봄',
+    period: '2025.10.20~2026.04.19(6개월)',
+    returnDate: '2026-04-20',
+    keyDate: '퇴사예정(4/20)',
+    note: '한부모 육아휴직 6개월 / 퇴사예정(4/20)',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '윤민정',
+    empNo: '65302866',
+    joinDate: '2006-02-06',
+    process: 'Wrapping& Fusing',
+    reason: '아이돌봄',
+    period: '2024-08-01 ~ 2024-08-31(1개월)',
+    returnDate: '2024-09-02',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '한상미',
+    empNo: '65302900',
+    joinDate: '2007-04-02',
+    process: 'Fusing',
+    reason: '첫째 임신',
+    period: '2021/05/21 ~ 2022/03/18 (10개월)',
+    returnDate: '2022-03-21',
+    keyDate: '2021-06-12',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '나은미',
+    empNo: '65302949',
+    joinDate: '2007-09-03',
+    process: 'Stack/Termi',
+    reason: '첫째',
+    period: '2020/03/16 ~ 2020/06/19 (3개월)',
+    returnDate: '2020-06-22',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '허정섭',
+    empNo: '65302951',
+    joinDate: '2007-09-03',
+    process: 'Test',
+    reason: '자녀 종양수술',
+    period: '2021/07/19 ~ 2021/08/16 (1개월)',
+    returnDate: '2021-08-17',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김기률',
+    empNo: '65303147',
+    joinDate: '2008-04-22',
+    process: 'Packaging',
+    reason: '가족돌봄',
+    period: '2022/02/21 ~ 2022/05/20 (3개월)',
+    returnDate: '2022-05-23',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '배지윤',
+    empNo: '65303585',
+    joinDate: '2011-03-08',
+    process: 'Test',
+    reason: '아이돌봄',
+    period: '2023-10-10 ~ 2023-10-29(20일)',
+    returnDate: '2023-10-30',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김은미',
+    empNo: '65303668',
+    joinDate: '2010-03-22',
+    process: 'Final assembly',
+    reason: '첫째 임신',
+    period: '2020/11/23 ~ 2021/11/20 (12개월)',
+    returnDate: '2021-11-22',
+    keyDate: '2020-12-26',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김은미',
+    empNo: '65303668',
+    joinDate: '2010-03-22',
+    process: 'Sub& Final&PCB',
+    reason: '가족돌봄',
+    period: '2022-10-11 ~ 2023-01-10(3개월)',
+    returnDate: '2023-01-11',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '백장흠',
+    empNo: '65305134',
+    joinDate: '2014-03-10',
+    process: 'Final assembly',
+    reason: '첫째 돌봄',
+    period: '2021/04/05 ~ 2021/05/05 (1개월)',
+    returnDate: '2021-05-06',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '백장흠',
+    empNo: '65305134',
+    joinDate: '2014-03-10',
+    process: 'Final assembly',
+    reason: '아이돌봄',
+    period: '2024-01-10 ~ 2024-02-09(1개월)',
+    returnDate: '2024-02-13',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김영민',
+    empNo: '65305274',
+    joinDate: '2014-10-06',
+    process: 'Final assembly',
+    reason: '첫째 돌봄',
+    period: '2023-05-17 ~ 2023-07-16',
+    returnDate: '2023-07-17',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김단아',
+    empNo: '65305887',
+    joinDate: '2016-05-16',
+    process: 'Stack/Termi/Sh',
+    reason: '첫째 돌봄',
+    period: '2021/05/17 ~ 2021/11/16 (6개월)',
+    returnDate: '2021-11-16',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이남경',
+    empNo: '65305933',
+    joinDate: '2016-10-04',
+    process: 'Admin',
+    reason: '첫째 임신',
+    period: '2020/09/01 ~ 2021/08/31 (12개월)',
+    returnDate: '2021-09-01',
+    keyDate: '2020-09-20',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이은혜',
+    empNo: '65306149',
+    joinDate: '2018-01-22',
+    process: 'Final assembly',
+    reason: '',
+    period: '2021/01/04 ~ 2022/01/03 (12개월)',
+    returnDate: '2022-01-04',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '김정순',
+    empNo: '퇴사',
+    joinDate: '2014-10-06',
+    process: 'Stack/Termi',
+    reason: '셋째 돌봄',
+    period: '2020/08/17 ~ 2021/03/24 (7개월)',
+    returnDate: '2021-03-25',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '이은민',
+    empNo: '퇴사',
+    joinDate: '2022-11-22',
+    process: 'Stack bonding\nShrink& Insertion',
+    reason: '첫 째 아이돌봄',
+    period: '2023-12-26 ~ 2024-11-21(332일)',
+    returnDate: '2024-11-22\n(계약종료)',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '정수정',
+    empNo: '퇴사',
+    joinDate: '2016-07-18',
+    process: 'Stack bonding\nShrink& Insertion',
+    reason: '아이돌봄',
+    period: '2023-11-07 ~ 2023-12-06(1개월)',
+    returnDate: '2023-12-07',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '한은정',
+    empNo: '퇴사',
+    joinDate: '2013-04-01',
+    process: 'Stack/Termi/Sh',
+    reason: '첫째 임신',
+    period: '2019/04/10 ~ 2020/04/09 (12개월)',
+    returnDate: '2020-04-10',
+    keyDate: '2019-05-03',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '한은정',
+    empNo: '퇴사',
+    joinDate: '2013-04-01',
+    process: 'Stack/Termi/Sh',
+    reason: '둘째 임신',
+    period: '2020/09/30 ~ 2021/09/28 (12개월)',
+    returnDate: '2021-09-29',
+    keyDate: '2020-10-29',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 4,           // 육아휴직
+    name: '한은정',
+    empNo: '퇴사',
+    joinDate: '2014-10-06',
+    process: 'Shrink/Insertion/Termi',
+    reason: '첫째 돌봄',
+    period: '2023-02-27 ~ 2023-05-26(3개월)',
+    returnDate: '2023-05-29',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '김한솔',
+    empNo: '65306072',
+    joinDate: '2017-07-10',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2024-02-08 ~ 2025-03-12(단축근무)',
+    returnDate: '',
+    keyDate: '2025-03-14',
+    note: '2시간 단축 근무',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '문주연',
+    empNo: '65306150',
+    joinDate: '2018-01-22',
+    process: 'Shrink/Insertion/Termi',
+    reason: '둘째 임신',
+    period: '2025-03-18 ~ 2025-04-30(단축근무)\n2025-09-11 ~ 2025-10-29 (단축근무)',
+    returnDate: '',
+    keyDate: '2025-11-12',
+    note: '2시간 단축 근무',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '김태은',
+    empNo: '65306207',
+    joinDate: '2018-05-28',
+    process: 'Stack bonding&Termination',
+    reason: '첫째 임신',
+    period: '2025-04-17 ~ 2025-05-27(5주 )(12주 이내)\n2025-10-08~2025-11-28(32주 이후)',
+    returnDate: '',
+    keyDate: '2025-12-02',
+    note: '2시간 단축 근무',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '권은영',
+    empNo: '65306166',
+    joinDate: '2018-02-26',
+    process: 'Final/PCB',
+    reason: '첫째 임신',
+    period: '2025-08-01~2025-09-15(단축근무)\n2026.01.15~출산일까지(전기간 단축)',
+    returnDate: '',
+    keyDate: '2026-03-30',
+    note: '2시간 단축 근무 / 26년 04월 1일 출산',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '최샛별',
+    empNo: '65306204',
+    joinDate: '2018-05-28',
+    process: 'Admin',
+    reason: '첫째 임신',
+    period: '2025-06-05~2025-07-01(1개월)',
+    returnDate: '2026-09-30',
+    keyDate: '2025-08-06',
+    note: '개인연차 7일소진 (6/23~7/1), 첫째 출산으로 인한 육아휴직 12개월 전량 사용',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '박민현',
+    empNo: '65304855',
+    joinDate: '2013-01-02',
+    process: 'Stack IQC',
+    reason: '첫째 임신',
+    period: '2021/10/28 ~ 2021/11/24(단축근무)',
+    returnDate: '',
+    keyDate: '2022-06-08',
+    note: '단축근무',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '이남경',
+    empNo: '65305933',
+    joinDate: '2016-10-04',
+    process: 'Admin',
+    reason: '둘째 임신',
+    period: '2021/11/08 ~ 2021/12/03(단축근무)',
+    returnDate: '',
+    keyDate: '2022-06-20',
+    note: '단축근무',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '이지은',
+    empNo: '65307268',
+    joinDate: '2017-06-26',
+    process: 'Stack/Termi/Sh',
+    reason: '첫째 임신',
+    period: '2021/10/25 ~ 2021/11/17(단축근무)',
+    returnDate: '',
+    keyDate: '2022-06-01',
+    note: '단축근무',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '박혜정',
+    empNo: '퇴사',
+    joinDate: '2019-08-12',
+    process: 'Stack/Termi/Sh',
+    reason: '첫째 임신',
+    period: '2021/11/29 ~ 2022/01/07(단축근무)',
+    returnDate: '',
+    keyDate: '2022-07-20',
+    note: '단축근무',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '권지수',
+    empNo: '65306152',
+    joinDate: '2018-01-22',
+    process: 'Stack/Termi/Sh',
+    reason: '둘 째 임신',
+    period: '2023/06/19 ~ 2023/08/04(단축근무)',
+    returnDate: '',
+    keyDate: '2024-02-09',
+    note: '단축근무 / 주간 고정',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '서다솜',
+    empNo: '65306435',
+    joinDate: '2019-11-18',
+    process: 'Stack IQC',
+    reason: '첫째 임신',
+    period: '2023-08-24 ~ 2023-10-15(단축근무)',
+    returnDate: '',
+    keyDate: '2024-04-16',
+    note: '단축근무 / 주간 고정',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '박민현',
+    empNo: '65304855',
+    joinDate: '2013-01-02',
+    process: 'Sensor wrapping&Stack IQC',
+    reason: '둘째 임신',
+    period: '2023-10-09 ~ 2023-11-26(단축근무)',
+    returnDate: '',
+    keyDate: '2024-06-06',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '김지은',
+    empNo: '65305083',
+    joinDate: '2019-11-18',
+    process: 'Final assembly',
+    reason: '첫째 임신',
+    period: '2024-10-10 ~ 2024-11-21(단축근무)',
+    returnDate: '',
+    keyDate: '2025-06-05',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '김지은',
+    empNo: '65305083',
+    joinDate: '2019-11-18',
+    process: 'Final assembly',
+    reason: '첫째 임신',
+    period: '2025-04-04~2025-05-19(단축근무)',
+    returnDate: '',
+    keyDate: '2025-06-05',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '김미현',
+    empNo: '65305441',
+    joinDate: '2015-06-01',
+    process: 'Sub& Final&PCB',
+    reason: '둘째 임신',
+    period: '2024-02-06 ~ 2024-03-12(단축근무)',
+    returnDate: '',
+    keyDate: '2024-09-24',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '김한솔',
+    empNo: '65306072',
+    joinDate: '2017-07-10',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2024-07-22 ~ 2024-09-06(단축근무)',
+    returnDate: '',
+    keyDate: '2025-03-14',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '김채희',
+    empNo: '65306346',
+    joinDate: '2019-06-03',
+    process: 'Fusing/Wrapping',
+    reason: '첫째 임신',
+    period: '2024-01-25 ~ 2024-03-14(단축근무)',
+    returnDate: '',
+    keyDate: '2024-09-26',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '이수빈',
+    empNo: '65306438',
+    joinDate: '2019-11-18',
+    process: 'Stack bonding&Termination',
+    reason: '첫째 임신',
+    period: '2024-08-26 ~ 2024-10-09(단축근무)',
+    returnDate: '',
+    keyDate: '2025-04-17',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '이수빈',
+    empNo: '65306438',
+    joinDate: '2019-11-18',
+    process: 'Stack bonding&Termination',
+    reason: '첫째 임신',
+    period: '2025-02-24 ~ 2025-03-21(단축근무)',
+    returnDate: '',
+    keyDate: '2025-04-17',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '정수미',
+    empNo: '65306600',
+    joinDate: '2015-06-01',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2024-05-07 ~ 2024-06-02(단축근무)',
+    returnDate: '',
+    keyDate: '2024-12-18',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '박진영',
+    empNo: '퇴사',
+    joinDate: '2019-06-03',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2024-04-29 ~ 2024-05-01(단축근무)',
+    returnDate: '',
+    keyDate: '2024-11-06',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '박해형',
+    empNo: '퇴사',
+    joinDate: '2018-02-26',
+    process: 'Final assembly',
+    reason: '첫째 임신',
+    period: '2024-04-15 ~ 2024-06-02(단축근무)',
+    returnDate: '',
+    keyDate: '2024-12-09',
+    note: '단축근무 / 주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '최윤서',
+    empNo: '65306601',
+    joinDate: '2015-06-01',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2024-04-29 ~ 2024-06-06(단축근무)',
+    returnDate: '',
+    keyDate: '2024-12-12',
+    note: '단축근무 / 주간 고정 / 특근 금지, 5/3 유산',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '정승은',
+    empNo: '65307078',
+    joinDate: '2018-02-26',
+    process: 'Admin',
+    reason: '첫째 임신',
+    period: '2025.01.02~2026.02.12 (12주 이내 분 단축)',
+    returnDate: '',
+    keyDate: '2026-08-27',
+    note: '뒤 2시간 단축 근무',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '정기영',
+    empNo: '65306939',
+    joinDate: '2023-01-03',
+    process: 'Fusing/Wrapping',
+    reason: '첫째 임신',
+    period: '2026.02.09~2026.02.20(12주 이내 분 단축)',
+    returnDate: '',
+    keyDate: '2026.10.04',
+    note: '유산(02/20)으로 조기종료(03.22>02.20)',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '최윤서',
+    empNo: '65306601',
+    joinDate: '2021-08-09',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2025-05-07~산전 휴가 신청 전',
+    returnDate: '',
+    keyDate: '',
+    note: '전기간 단축근로',
+    status: 'end',
+  },
+  {
+    leaveId: 1,           // 임산부 단축근로 + 주간고정
+    name: '김미현',
+    empNo: '65305441',
+    joinDate: '2015-06-01',
+    process: 'Sub& Final&PCB',
+    reason: '첫째 임신',
+    period: '',
+    returnDate: '',
+    keyDate: '2023-02-24',
+    note: '주간 고정 / 특근 금지',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이예승',
+    empNo: '65306092',
+    joinDate: '2017-08-08',
+    process: 'Shrink/Insertion/Termi',
+    reason: '치질 수술',
+    period: '2025.09.04~2025.10.15(6주)',
+    returnDate: '2025-10-16',
+    keyDate: '2025.09.05',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김현진B',
+    empNo: '65306834',
+    joinDate: '2022.06.07',
+    process: 'Stack bonding',
+    reason: '치질 수술',
+    period: '2025.09.06~2025.10.03(4주)',
+    returnDate: '2025-10-13',
+    keyDate: '2025.09.05',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이석준',
+    empNo: '퇴사',
+    joinDate: '2025-06-23',
+    process: 'Test',
+    reason: '허리디스크',
+    period: '2025.09.09~2025.10.06(4주)',
+    returnDate: '2025-10-13',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이수진',
+    empNo: '65302819',
+    joinDate: '2004-08-11',
+    process: 'Stack bonding&\nTermination',
+    reason: '자궁암',
+    period: '2023-05-23~2023-06-19(4주)',
+    returnDate: '2023-06-20',
+    keyDate: '2023-05-23',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '고유린',
+    empNo: '65302922',
+    joinDate: '2007-08-21',
+    process: 'Wrapping& Fusing',
+    reason: '자궁암',
+    period: '2023-08-09~2023-09-05(4주)',
+    returnDate: '2023-09-06',
+    keyDate: '2023-08-09',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김다율',
+    empNo: '65306979',
+    joinDate: '2023-03-02',
+    process: 'IQC/OQC',
+    reason: '십자인대 파손',
+    period: '2023-07-26~2023-09-05(6주)',
+    returnDate: '2023-09-06',
+    keyDate: '2023-07-26',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김해동',
+    empNo: '65303249',
+    joinDate: '2008-06-23',
+    process: 'Test',
+    reason: '오른발목 무릎 부상',
+    period: '2023-01-20~2023-04-30(101일)',
+    returnDate: '2023-05-01',
+    keyDate: '2023-01-20, 31',
+    note: '101일',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이효원',
+    empNo: '65306736',
+    joinDate: '2022-03-28',
+    process: 'Termination/Shrink/Insertion',
+    reason: '발목 접질림',
+    period: '2025.10.06 ~ 2025.11.02(연장4주)',
+    returnDate: '2025.11.03',
+    keyDate: '',
+    note: '2025.09.08~2025.10.05(4주) 이후 연장 4주 건',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이재민',
+    empNo: '퇴사',
+    joinDate: '2023-04-13',
+    process: 'IQC/포장',
+    reason: '손목 골절',
+    period: '2025.09.14~2025.09.28',
+    returnDate: '퇴사예정10/31',
+    keyDate: '',
+    note: '2025.09.14~2025.10.25(6주)진단 받았으나 9.29~10.24까지 연차로 변경',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이효원',
+    empNo: '65306736',
+    joinDate: '2022-03-28',
+    process: 'Termination/Shrink/Insertion',
+    reason: '발목 접질림',
+    period: '2025.11.05 ~ 2025.12.02(연장4주)',
+    returnDate: '2025.12.03',
+    keyDate: '',
+    note: '2025.10.06 ~ 2025.11.02 이후 2차 연장 건(동일 건으로 3번째 장기병가)',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김민우A',
+    empNo: '65302829',
+    joinDate: '2005-02-01',
+    process: 'Admin',
+    reason: '길랭-바래 증후군',
+    period: '2022/01/19 ~ 2022/03/24 (2개월)\n2022/03/25 ~ 2022/05/24 (2개월)',
+    returnDate: '2022-05-25',
+    keyDate: '',
+    note: '2개월 연장',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이수진',
+    empNo: '65302819',
+    joinDate: '2004-05-11',
+    process: 'Stack bonding & Termination',
+    reason: '무릎관절증 수술',
+    period: '2022/04/19 ~ 2022/06/06 (7주)',
+    returnDate: '2022-06-07',
+    keyDate: '2022-04-19',
+    note: '2주 연장',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이아라',
+    empNo: '퇴사',
+    joinDate: '2016-07-18',
+    process: 'Packaging',
+    reason: '공황장애',
+    period: '2019/09/21 ~ 2019/12/20 (3개월)\n- 1차 연장: 3개월(12/4~3/3)',
+    returnDate: '2020-03-09',
+    keyDate: '',
+    note: '3/4~6 병가',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '정은경',
+    empNo: '퇴사',
+    joinDate: '2015-06-01',
+    process: 'Stack bonding&Termination',
+    reason: '갑산선 암 초기',
+    period: '2022-08-29~2022-09-25(4주)',
+    returnDate: '2022-09-26',
+    keyDate: '2022-08-29',
+    note: '4주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '문정주',
+    empNo: '65302898',
+    joinDate: '2007-03-21',
+    process: 'Stack bonding&Termination',
+    reason: '발가락 골절',
+    period: '2022-10-11~2022-11-14(5주)',
+    returnDate: '2022-11-15',
+    keyDate: '2022-10-11',
+    note: '5주(무급)',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '정정이',
+    empNo: '65304392',
+    joinDate: '2011-03-27',
+    process: 'Fusing',
+    reason: '자궁 수술',
+    period: '2026.03.23~2026.04.19 (4주)',
+    returnDate: '2026-04-20',
+    keyDate: '2026-03-23',
+    note: '무급',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '박장영',
+    empNo: '65305934',
+    joinDate: '2016-10-04',
+    process: 'TEST',
+    reason: '어깨 근육파열',
+    period: '2025.11.03~2025.12.14(6주)\n2025.12.16~2026.01.25(약6주) 연장',
+    returnDate: '2026.01.26',
+    keyDate: '2025.11.03',
+    note: '무급',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이예승',
+    empNo: '65306092',
+    joinDate: '2017-08-08',
+    process: 'Shrink/Insertion/Termi',
+    reason: '목 디스크',
+    period: '2025.08.01~2025.08.28(4주)',
+    returnDate: '2025-08-29',
+    keyDate: '',
+    note: '무급',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이재영',
+    empNo: '65306347',
+    joinDate: '2019-06-03',
+    process: 'Wrapping& Fusing',
+    reason: '발목 열상 및 요추 염좌',
+    period: '2025.07.28~2025.08.24(4주)',
+    returnDate: '2025-08-25',
+    keyDate: '',
+    note: '무급',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '권수련',
+    empNo: '65306670',
+    joinDate: '2022-01-04',
+    process: 'Stack bonding',
+    reason: '늑골 골절',
+    period: '2026.01.27~2026.02.09(2주)',
+    returnDate: '2026.02.10',
+    keyDate: '',
+    note: '무급',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김상은',
+    empNo: '65307399',
+    joinDate: '2025-07-07',
+    process: 'P8 Prep',
+    reason: '무릎 인대파열',
+    period: '2025.10.27~2025.11.23(4주)',
+    returnDate: '2025.11.24',
+    keyDate: '',
+    note: '무급',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이승주',
+    empNo: '퇴사',
+    joinDate: '2025-06-16',
+    process: 'Ph4',
+    reason: '허리통증',
+    period: '2025.12.16~2026.01.12 (4주)',
+    returnDate: '2026.01.13',
+    keyDate: '',
+    note: '무급',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이진희',
+    empNo: '65306285',
+    joinDate: '2019-01-14',
+    process: 'IQC/OQC',
+    reason: '교통사고(광대, 턱골절)',
+    period: '2020/02/25 ~ 2020/03/23 (1개월)',
+    returnDate: '2020-03-24',
+    keyDate: '2020-02-25',
+    note: '병가3일, 연차1일',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이아라',
+    empNo: '퇴사',
+    joinDate: '2016-07-18',
+    process: 'Packaging',
+    reason: '공황장애\n(우발적 발작성 불안)',
+    period: '2020/10/15 ~ 2021/01/12 (3개월)\n2020/12/29 ~ 2021/03/28 (3개월)',
+    returnDate: '2021-03-29',
+    keyDate: '',
+    note: '진단 3개월, 3개월 연장',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김영훈',
+    empNo: '65302931',
+    joinDate: '2007-08-21',
+    process: 'Technician',
+    reason: '각막파열 수술',
+    period: '2020/08/16 ~ 2020/10/15 (2개월)\n2020/10/16 ~ 2020/11/14 (1개월 연장)',
+    returnDate: '2020-11-16',
+    keyDate: '2020-08-16',
+    note: '진단 8주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '윤현정',
+    empNo: '65302914',
+    joinDate: '2007-08-21',
+    process: 'Fusing',
+    reason: '자궁내 평활근종',
+    period: '2020/12/22 ~ 2021/01/18 (1개월)',
+    returnDate: '2021-01-19',
+    keyDate: '2020-12-22',
+    note: '진단4주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '최라정',
+    empNo: '65303171',
+    joinDate: '2008-05-13',
+    process: 'Final assembly',
+    reason: '두개골 골절',
+    period: '2021/06/22 ~ 2021/07/19 (1개월)',
+    returnDate: '2021-07-20',
+    keyDate: '',
+    note: '진단4주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김동경',
+    empNo: '65303760',
+    joinDate: '2010-06-28',
+    process: 'Final assembly',
+    reason: '경추통',
+    period: '2020/10/30 ~ 2020/11/26 (1개월)',
+    returnDate: '2020-11-27',
+    keyDate: '',
+    note: '진단4주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이예승',
+    empNo: '65306092',
+    joinDate: '2017-08-08',
+    process: 'Stack/Termi/Sh',
+    reason: '만성 두드러기',
+    period: '2021/02/23 ~ 2022/03/22 (1개월)',
+    returnDate: '2021-03-23',
+    keyDate: '',
+    note: '진단4주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이진희',
+    empNo: '65306285',
+    joinDate: '2019-01-14',
+    process: 'IQC/OQC',
+    reason: '발가락 골절',
+    period: '2022/06/07 ~ 2022/07/04 (4주)',
+    returnDate: '2022-07-05',
+    keyDate: '',
+    note: '진단4주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '정성훈',
+    empNo: '65306476',
+    joinDate: '2020-02-10',
+    process: 'Test',
+    reason: '오른 발목 인대 파열',
+    period: '2020/12/01 ~ 2020/12/28 (1개월)',
+    returnDate: '2020-12-29',
+    keyDate: '',
+    note: '진단4주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '지길화',
+    empNo: '65303117',
+    joinDate: '2008-03-24',
+    process: 'Packaging',
+    reason: '중증근무력증',
+    period: '2022-06-24 ~ 2022-08-07(45일)',
+    returnDate: '2022-08-08',
+    keyDate: '',
+    note: '진단4주 + 17일(연장)',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김현정',
+    empNo: '65303334',
+    joinDate: '2008-09-29',
+    process: 'Stack/Termi/Sh',
+    reason: '목디스크',
+    period: '2021/03/02 ~ 2021/03/29 (1개월)\n2021/03/30 ~ 2021/04/18 (1개월)',
+    returnDate: '2021-04-19',
+    keyDate: '',
+    note: '진단4주\n1개월 연장',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김지은',
+    empNo: '65305083',
+    joinDate: '2014-01-13',
+    process: 'Final assembly',
+    reason: '경추(목)통',
+    period: '2021/06/30 ~ 2021/07/27 (1개월)\n2021/07/28 ~ 2021/09/17 (7-5주)\n2021/09/18 ~ 2021/10/29 (6주)',
+    returnDate: '2021-11-01',
+    keyDate: '',
+    note: '진단4주\n진단9주\n진단6주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김가은',
+    empNo: '퇴사',
+    joinDate: '2019-01-14',
+    process: 'IQC/OQC',
+    reason: '천골(골반뼈) 골절',
+    period: '2021/06/21 ~ 2021/07/14 (1개월)\n2021/07/15 ~ 2021/07/27 (2주일)',
+    returnDate: '2021-07-28',
+    keyDate: '',
+    note: '진단4주, 2주연장',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '강대웅',
+    empNo: '65302857',
+    joinDate: '2005-10-12',
+    process: 'Technician',
+    reason: '햄스트링 파열',
+    period: '2021/04/22 ~ 2021/06/02 (6주)',
+    returnDate: '2021-06-03',
+    keyDate: '',
+    note: '진단6주',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이진희',
+    empNo: '65306285',
+    joinDate: '2019-01-14',
+    process: 'IQC/OQC',
+    reason: '발등뼈 골절',
+    period: '2021/09/08 ~ 2021/10/17 (6주)\n2021/10/18 ~ 2021/11/14 (4주)\n2021/11/15 ~ 2021/12/05 (3주)',
+    returnDate: '2021-12-06',
+    keyDate: '',
+    note: '진단6주\n4주연장\n3주연장',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '윤민정',
+    empNo: '65302866',
+    joinDate: '2006-02-06',
+    process: 'Wrapping& Fusing',
+    reason: '목디스크',
+    period: '2022/06/14 ~ 2022/08/20 (69일)',
+    returnDate: '2022-08-22',
+    keyDate: '',
+    note: '진단6주+4주(연장)',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이효원',
+    empNo: '65306736',
+    joinDate: '2022-03-28',
+    process: 'Termination/Shrink/Insertion',
+    reason: '발목 접질림',
+    period: '2025.09.08~2025.10.05(4주)',
+    returnDate: '2025-10-13',
+    keyDate: '',
+    note: '출근길 TP2벤처동에서 발목접질림으로 산재 처리 예정',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '박정은',
+    empNo: '65307367',
+    joinDate: '2025.05.27',
+    process: 'Termination/Shrink/Insertion',
+    reason: '교통사고(손목골절)',
+    period: '2025.09.03~2025.09.30(4주)',
+    returnDate: '2025-10-13',
+    keyDate: '',
+    note: '퇴근길 교통사고로 인한 손목골절, 깁스 상태',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '최병두',
+    empNo: '65303104',
+    joinDate: '2008-03-17',
+    process: '포장',
+    reason: '목디스크',
+    period: '2024-10-07~2024-11-03(4주)\n2024-11-04~2024-11-17(2주)',
+    returnDate: '2024-11-18',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이현진',
+    empNo: '65303672',
+    joinDate: '2010-03-22',
+    process: 'Test',
+    reason: '무릎 골절',
+    period: '2024-02-05 ~ 2024-03-31(8주)',
+    returnDate: '2024-04-01',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김지은',
+    empNo: '65305083',
+    joinDate: '2019-11-18',
+    process: 'Final assembly',
+    reason: '조시출산',
+    period: '2025-04-08~2025-05-11(5주)',
+    returnDate: '2025-05-12',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '백장흠',
+    empNo: '65305134',
+    joinDate: '2014-03-10',
+    process: 'Final assembly',
+    reason: '좌측 어깨 탈구',
+    period: '2023-11-29 ~ 2024-01-09(6주)',
+    returnDate: '2024-01-10',
+    keyDate: '2023-11-29',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '고연지',
+    empNo: '65305711',
+    joinDate: '2015-10-05',
+    process: 'Stack/Termi/Sh',
+    reason: '허리디스크',
+    period: '2025-04-14~2025-05-23(약 6주)',
+    returnDate: '2025-05-24',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김보은',
+    empNo: '65305957',
+    joinDate: '2016-12-12',
+    process: 'Stack bonding&\nTermination',
+    reason: '우측 복사뼈 골절',
+    period: '2023-11-16 ~ 2023-12-17(32일)',
+    returnDate: '2023-12-18',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김한솔',
+    empNo: '65306072',
+    joinDate: '2017-07-10',
+    process: 'IQC/OQC',
+    reason: '절박유산',
+    period: '2024-08-19~2024-09-13',
+    returnDate: '2024-09-16',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이예승',
+    empNo: '65306092',
+    joinDate: '2017-08-08',
+    process: 'Stack/Termi/Sh',
+    reason: '만성 두드러기',
+    period: '2025.03.12~2025.04.07(27일)',
+    returnDate: '2025-04-08',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '박현순',
+    empNo: '65306132',
+    joinDate: '2017-12-19',
+    process: 'Fusing',
+    reason: '양손 힘줄염',
+    period: '2024-03-08~2024-04-04 (28일)',
+    returnDate: '2024-04-05',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김보라',
+    empNo: '65306190',
+    joinDate: '2018-04-11',
+    process: 'Final assembly',
+    reason: '목디스크',
+    period: '2024-03-27~2024-04-22(4주)',
+    returnDate: '2024-04-23',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '여성욱',
+    empNo: '65306195',
+    joinDate: '2018-04-11',
+    process: 'Test',
+    reason: '허리디스크',
+    period: '2023-05-26~2023-06-22(4주)',
+    returnDate: '2023-06-23',
+    keyDate: '2023-05-26',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '박승현',
+    empNo: '65306378',
+    joinDate: '2021-01-11',
+    process: 'PH4',
+    reason: '벨마비',
+    period: '2024-05-19~2024-06-15(4주)',
+    returnDate: '2024-06-17',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '박소연',
+    empNo: '65306390',
+    joinDate: '2019-08-12',
+    process: 'Stack bonding&\nTermination',
+    reason: '혼합형 불안\n우울장애',
+    period: '2023-12-20 ~ 2024-03-19(3개월)',
+    returnDate: '2024-03-20',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '박소연',
+    empNo: '65306390',
+    joinDate: '2019-08-12',
+    process: 'Stack bonding&\nTermination',
+    reason: '혼합형 불안\n우울장애',
+    period: '2024-11-25 ~ 2024-12-24(1개월)',
+    returnDate: '2024-12-26',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '신유미',
+    empNo: '65306436',
+    joinDate: '2019-11-18',
+    process: 'Stack IQC',
+    reason: '자궁, 난소 이상 확인',
+    period: '2023-05-23~2023-06-19(4주)',
+    returnDate: '2023-06-20',
+    keyDate: '2023-05-23',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '신유미',
+    empNo: '65306436',
+    joinDate: '2019-11-18',
+    process: 'Stack IQC',
+    reason: '어깨 골절',
+    period: '2024-10-21~2024-11-14(4주)',
+    returnDate: '2024-11-15',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '신유미',
+    empNo: '65306436',
+    joinDate: '2019-11-18',
+    process: 'Stack preparation',
+    reason: '경추간판장애',
+    period: '2025.07.04 ~ 2025.07.31(4주)',
+    returnDate: '2025-08-01',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이수빈',
+    empNo: '65306438',
+    joinDate: '2019-11-18',
+    process: 'Stack bonding&Termination',
+    reason: '허리디스크',
+    period: '2024-05-14~2024-06-10(4주)',
+    returnDate: '2024-06-11',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이효선',
+    empNo: '65306691',
+    joinDate: '2022-01-24',
+    process: '통합',
+    reason: '우울증 에피소드',
+    period: '2025-03-24~2025-05-09(47일)',
+    returnDate: '2025-05-12',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이성환',
+    empNo: '65306693',
+    joinDate: '2022-01-24',
+    process: 'Final assembly',
+    reason: '좌측 발목골절',
+    period: '2023-08-18~2023-10-17(2개월)',
+    returnDate: '2023-10-18',
+    keyDate: '2023-08-18',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이성환',
+    empNo: '65306693',
+    joinDate: '2022-01-24',
+    process: 'Final assembly',
+    reason: '손가락 골절',
+    period: '2024-09-19~2024-10-28(1차 4주/ 2차 12일)',
+    returnDate: '2024-10-17',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김민우B',
+    empNo: '65306720',
+    joinDate: '2022-02-16',
+    process: 'Test',
+    reason: '발목수술',
+    period: '2024-8-29~2024-11-20(12주)',
+    returnDate: '2024-11-21',
+    keyDate: '2024-08-29',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이효원',
+    empNo: '65306736',
+    joinDate: '2022-03-28',
+    process: '통합',
+    reason: '목디스크',
+    period: '1차 2024-07-02~2024-07-28(4주)\n2차 2024-08-01~2024-08-27(4주)',
+    returnDate: '2024-08-28',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이효원',
+    empNo: '65306736',
+    joinDate: '2022-03-28',
+    process: '통합',
+    reason: '목디스크',
+    period: '1차 2024-07-02~2024-07-28(4주)\n2차 2024-08-01~2024-08-27(4주)\n3차 2024-09-27~2024-11-21(8주)\n4차 2024-11-22~2024-12-17\n5차 2024-12-18~2024-12-24\n6차 2025-02-14~2025-03-07(22일)',
+    returnDate: '2025-03-10',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '곽운',
+    empNo: '65306846',
+    joinDate: '2022-07-19',
+    process: 'Final assembly',
+    reason: '우측 중지 골절',
+    period: '2023-11-10 ~ 2023-12-07(4주)\n2023-12-08 ~ 2023-12-27(연장 20일)',
+    returnDate: '2023-12-28',
+    keyDate: '2023-11-10',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '정하영',
+    empNo: '65306857',
+    joinDate: '2022-08-22',
+    process: 'Fusing/Wrapping',
+    reason: '손가락 부상',
+    period: '2025.06.16 ~ 2025.07.12(4주)',
+    returnDate: '2025-07-14',
+    keyDate: '2025-06-15',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '원수정',
+    empNo: '65306858',
+    joinDate: '2022-08-02',
+    process: 'Wrapping& Fusing',
+    reason: '허리디스크',
+    period: '1차: 2024-8-14~2024-09-10\n2차: 2024-09-13 ~ 2024-10-10\n3차 2024-10-11 ~ 2024-11-07\n4차 2024-11-08~2024-11-21',
+    returnDate: '2024-11-22',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '윤설화',
+    empNo: '65306937',
+    joinDate: '2023-01-03',
+    process: 'Stack bonding&Termination',
+    reason: '안면 덜림',
+    period: '2025-05-19~2025-06-15(4주)',
+    returnDate: '2025-06-16',
+    keyDate: '2025-05-19',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '정기영',
+    empNo: '65306939',
+    joinDate: '2023-01-03',
+    process: 'Stack bonding\nShrink& Insertion',
+    reason: '자궁내막증',
+    period: '2024-08-20~2024-09-16',
+    returnDate: '2024-09-19',
+    keyDate: '2024-08-19',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '김미선',
+    empNo: '퇴사',
+    joinDate: '2016-03-02',
+    process: 'Wrapping& Fusing',
+    reason: '목 디스크',
+    period: '2023-11-13 ~ 2023-12-10(4주)\n2023-12-11 ~ 2024-01-07(4주 연장)\n2024-01-08 ~ 2024-03-03(8주 연장)',
+    returnDate: '2024-03-04',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '박서연',
+    empNo: '퇴사',
+    joinDate: '2017-06-26',
+    process: 'IQC/OQC',
+    reason: '우울증 에피소드',
+    period: '2020/06/23 ~ 2020/07/20 (1개월)',
+    returnDate: '2020-07-21',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '양수빈',
+    empNo: '퇴사',
+    joinDate: '2019-09-18',
+    process: 'Fusing',
+    reason: '왼발 발가락 골적',
+    period: '2024-03-21~2024-03-27 (7일)',
+    returnDate: '2024-03-28',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '이규락',
+    empNo: '퇴사',
+    joinDate: '2022-12-06',
+    process: '포장',
+    reason: '신장병',
+    period: '2024-10-28~2024-12-05',
+    returnDate: '',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '전민호',
+    empNo: '퇴사',
+    joinDate: '2024-11-20',
+    process: 'Final assembly',
+    reason: '늑골 골절',
+    period: '2025-01-03 ~ 2025-01-30(4주)',
+    returnDate: '2025-01-31',
+    keyDate: '',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 6,           // 장기병가
+    name: '최은주A',
+    empNo: '65305850',
+    joinDate: '2016-03-02',
+    process: 'Stack/Termi',
+    reason: '발목인대 파열',
+    period: '2020/05/25 ~ 2020/07/31 (10주)',
+    returnDate: '2020-08-18',
+    keyDate: '2020-05-26',
+    note: '',
+    status: 'end',
+  },
+  {
+    leaveId: 2,           // 출산전후휴가 (산전/산후)
+    name: '김한솔',
+    empNo: '65306072',
+    joinDate: '2017-07-10',
+    process: 'IQC/OQC',
+    reason: '첫째 임신',
+    period: '2024-08-06 ~ 2024-08-16',
+    returnDate: '',
+    keyDate: '2025-08-19',
+    note: '산전 휴가 중 11일 사용',
+    status: 'end',
+  }
+];
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+function init() {
+  const list = document.getElementById('leaveList');
+  leaves.forEach((l) => {
+    const tagMap = { paid:'유급', unpaid:'무급', mixed:'조건부', special:'보호조치' };
+    const tagClass = { paid:'tag-paid', unpaid:'tag-unpaid', mixed:'tag-mixed', special:'tag-special' };
+    const cnt = employees.filter(e => e.leaveId === l.id && e.status !== 'end').length;
+    const btn = document.createElement('button');
+    btn.className = 'leave-btn';
+    btn.innerHTML = `
+      <span class="icon">${l.icon}</span>
+      <span>${l.name}</span>
+      ${cnt > 0 ? `<span class="tag tag-paid" style="background:#d1fae5;color:#065f46">${cnt}명</span>` : `<span class="tag ${tagClass[l.salaryType]}">${tagMap[l.salaryType]}</span>`}
+    `;
+    btn.onclick = () => selectLeave(l, btn);
+    list.appendChild(btn);
+  });
+}
+
+// ── SELECT LEAVE ──────────────────────────────────────────────────────────────
+function selectLeave(leave, btnEl) {
+  currentLeave = leave;
+  document.querySelectorAll('.leave-btn').forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  renderInfo(leave);
+  renderStatus(leave);
+}
+
+// ── RENDER INFO ───────────────────────────────────────────────────────────────
+function renderInfo(l) {
+  const salaryBadge = { paid: 'paid', unpaid: 'unpaid', mixed: 'mixed', special: '' };
+  const salaryLabel = { paid: '💰 유급', unpaid: '🚫 무급', mixed: '⚡ 조건부 유급', special: '🔒 보호조치' };
+
+  const stepsHtml = l.steps.map(s => `
+    <div class="proc-step">
+      <div class="step-num ${s.sub ? 'sub' : ''}">${s.sub ? s.num : s.num}</div>
+      <div style="white-space:pre-line">${s.text}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('infoCard').innerHTML = `
+    <div class="info-header">
+      <div class="big-icon">${l.icon}</div>
+      <div>
+        <h2>${l.name}</h2>
+        <div class="meta">
+          <span class="meta-badge ${salaryBadge[l.salaryType]}">${salaryLabel[l.salaryType]}</span>
+          <span class="meta-badge">결재: ${l.approval.split('\n')[0]}</span>
+        </div>
+      </div>
+    </div>
+    <div class="info-body">
+      <div class="field">
+        <div class="field-label">결재권 상한</div>
+        <div class="field-value">${l.approval}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">급여 유형</div>
+        <div class="field-value">${l.salary}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">신청 가능 조건</div>
+        <div class="field-value">${l.condition}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">신청 기한</div>
+        <div class="field-value">${l.deadline}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">사용 가능 기간</div>
+        <div class="field-value">${l.duration}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">필요 서류</div>
+        <div class="field-value">${l.documents}</div>
+      </div>
+      <div class="field notes-field full">
+        <div class="field-label">⚠ 유의사항</div>
+        <div class="field-value">${l.notes}</div>
+      </div>
+      <div class="field proc-field full">
+        <div class="field-label">📌 전체 절차</div>
+        <div class="proc-steps">${stepsHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ── RENDER STATUS ─────────────────────────────────────────────────────────────
+function renderStatus(l) {
+  const card = document.getElementById('statusCard');
+
+  if (l.noChecklist) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const emps = employees
+    .filter(e => e.leaveId === l.id && e.status !== 'end')
+    .sort((a, b) => {
+      const da = a.returnDate ? new Date(a.returnDate) : null;
+      const db = b.returnDate ? new Date(b.returnDate) : null;
+      if (da && db) return da - db;
+      if (da) return -1;
+      if (db) return 1;
+      return 0;
+    });
+  const active  = emps.filter(e => e.status === 'active').length;
+  const ret     = emps.filter(e => e.status === 'return').length;
+  const pending = emps.filter(e => e.status === 'pending').length;
+  const ended   = emps.filter(e => e.status === 'end').length;
+
+  document.getElementById('statusTitle').textContent = `${l.icon} ${l.name} — 직원 현황`;
+  document.getElementById('statusSubtitle').textContent = `총 ${emps.length}명 등록`;
+
+  // 요약 배지
+  const pills = [
+    { label: `휴직중 ${active}명`, cls: 'active', show: true },
+    { label: `복귀예정 ${ret}명`, cls: 'return', show: ret > 0 },
+    { label: `대기중 ${pending}명`, cls: 'pending', show: pending > 0 },
+    { label: `종료 ${ended}명`, cls: 'end', show: ended > 0 },
+  ];
+  document.getElementById('summaryPills').innerHTML =
+    pills.filter(p => p.show).map(p => `<span class="s-pill ${p.cls}">${p.label}</span>`).join('');
+
+  // 테이블
+  const wrap = document.getElementById('empTableWrap');
+  if (emps.length === 0) {
+    wrap.innerHTML = `<div class="no-emp">등록된 직원이 없습니다</div>`;
+    return;
+  }
+
+  const dateLbl = DATE_LABEL[l.id] || '없음';
+  const showDateCol = dateLbl !== '없음';
+
+  const statusLabel = { active:'휴직중', return:'복귀예정', pending:'대기중', end:'종료' };
+  const statusCls   = { active:'sb-active', return:'sb-return', pending:'sb-pending', end:'sb-end' };
+
+  wrap.innerHTML = `
+    <table class="emp-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>사번</th>
+          <th>이름</th>
+          <th>입사일</th>
+          <th>담당공정</th>
+          <th>사유</th>
+          <th>기간</th>
+          <th>복귀예정일</th>
+          ${showDateCol ? `<th>${dateLbl}</th>` : ''}
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${emps.map((e, i) => `
+          <tr>
+            <td style="color:var(--muted);font-weight:700;font-size:12px;white-space:nowrap">${i + 1}</td>
+            <td class="empno-col">${e.empNo || '-'}</td>
+            <td class="name-col">${e.name}</td>
+            <td class="join-col">${e.joinDate || '-'}</td>
+            <td class="process-col">${e.process || '-'}</td>
+            <td class="reason-col">${e.reason || '-'}</td>
+            <td class="period-col">${formatPeriod(e.period)}</td>
+            <td class="return-col">${e.returnDate || '-'}</td>
+            ${showDateCol ? `<td class="key-col">${e.keyDate || '-'}</td>` : ''}
+            <td class="note-col">${(e.note || '-').replace(/\\n/g, '<br>')}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ── 종료 이력 관리 ───────────────────────────────────────────────────────────
+let historyEditIdx = null;
+let historyManagedEmps = [];
+
+function openHistoryForm(idx) {
+  historyEditIdx = idx;
+  const form = document.getElementById('historyForm');
+  form.classList.add('open');
+  document.getElementById('historyFormTitle').textContent = idx === null ? '종료 이력 추가' : '종료 이력 수정';
+
+  // 휴직종류 드롭다운
+  const sel = document.getElementById('hf-leaveId');
+  sel.innerHTML = leaves.map(l => `<option value="${l.id}">${l.icon} ${l.name}</option>`).join('');
+
+  if (idx !== null) {
+    const e = employees[idx];
+    document.getElementById('hf-name').value     = e.name || '';
+    document.getElementById('hf-empno').value    = e.empNo || '';
+    document.getElementById('hf-leaveId').value  = e.leaveId || 1;
+    document.getElementById('hf-joinDate').value = e.joinDate || '';
+    document.getElementById('hf-process').value  = e.process || '';
+    document.getElementById('hf-reason').value   = e.reason || '';
+    document.getElementById('hf-period').value   = e.period || '';
+    document.getElementById('hf-returnDate').value = e.returnDate || '';
+    document.getElementById('hf-keyDate').value  = e.keyDate || '';
+    document.getElementById('hf-note').value     = (e.note || '').replace(/\\n/g, '\n');
+    document.getElementById('hf-status') && (document.getElementById('hf-status').value = 'end');
+  } else {
+    ['hf-name','hf-empno','hf-joinDate','hf-process','hf-reason','hf-period','hf-returnDate','hf-keyDate','hf-note']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('hf-leaveId').value = 1;
+  }
+  updateHistoryKeyDateLabel();
+  form.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function closeHistoryForm() {
+  document.getElementById('historyForm').classList.remove('open');
+  historyEditIdx = null;
+}
+
+function updateHistoryKeyDateLabel() {
+  const lid = parseInt(document.getElementById('hf-leaveId')?.value);
+  if (!lid) return;
+  const lbl = DATE_LABEL[lid] || '없음';
+  document.getElementById('hf-keyDateLabel').textContent =
+    lbl === '없음' ? '수술일/출산예정일 (해당없음)' : lbl;
+}
+document.addEventListener('change', e => {
+  if (e.target.id === 'hf-leaveId') updateHistoryKeyDateLabel();
+});
+
+function saveHistoryEmp() {
+  const name = document.getElementById('hf-name').value.trim();
+  if (!name) { alert('이름을 입력하세요'); return; }
+
+  const escape = str => (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
+
+  const emp = {
+    leaveId:    parseInt(document.getElementById('hf-leaveId').value),
+    name,
+    empNo:      document.getElementById('hf-empno').value.trim(),
+    joinDate:   document.getElementById('hf-joinDate').value.trim(),
+    process:    document.getElementById('hf-process').value.trim(),
+    reason:     document.getElementById('hf-reason').value.trim(),
+    period:     document.getElementById('hf-period').value.trim(),
+    returnDate: document.getElementById('hf-returnDate').value.trim(),
+    keyDate:    document.getElementById('hf-keyDate').value.trim(),
+    note:       document.getElementById('hf-note').value.trim(),
+    status:     'end',
+  };
+
+  if (historyEditIdx !== null) {
+    employees[historyEditIdx] = emp;
+  } else {
+    employees.push(emp);
+  }
+
+  closeHistoryForm();
+  generateHistoryCode();
+  renderHistory();
+  // 추가된 직원 자동 선택
+  const newIdx = employees.length - 1;
+  if (historyEditIdx === null) selectHistory(newIdx);
+}
+
+function generateHistoryCode() {
+  const escape = str => (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
+  const lines = employees.map(e => {
+    const leave = leaves.find(l => l.id === e.leaveId);
+    const leaveName = leave ? leave.name : '';
+    return `  {
+    leaveId: ${e.leaveId},           // ${leaveName}
+    name: '${escape(e.name)}',
+    empNo: '${escape(e.empNo||'')}',
+    joinDate: '${escape(e.joinDate||'')}',
+    process: '${escape(e.process||'')}',
+    reason: '${escape(e.reason||'')}',
+    period: '${escape(e.period||'')}',
+    returnDate: '${escape(e.returnDate||'')}',
+    keyDate: '${escape(e.keyDate||'')}',
+    note: '${escape(e.note||'')}',
+    status: '${e.status}',
+  }`;
+  });
+  const code = `const employees = [\n${lines.join(',\n')}\n];`;
+  document.getElementById('historyCodeBox').textContent = code;
+  document.getElementById('historyCodeSection').style.display = 'block';
+}
+
+function copyHistoryCode() {
+  const code = document.getElementById('historyCodeBox').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('historyCopyBtn');
+    btn.textContent = '✓ 복사됨!';
+    btn.classList.add('copy-done');
+    setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('copy-done'); }, 2000);
+  });
+}
+
+// ── 기간 포맷 ─────────────────────────────────────────────────────────────────
+function formatPeriod(period) {
+  if (!period || period === '-') return '-';
+  // 날짜 패턴으로 시작하는 두 번째 구간부터 <br> 삽입
+  // 구분자: 두 번째 날짜구간이 시작되는 지점
+  // 패턴: 숫자4자리.(또는-)숫자로 시작하는 구간을 찾아서 앞에 <br> 삽입
+  const result = period
+    // \n 을 <br>로
+    .replace(/\\n/g, '<br>')
+    // 두 번째 날짜 구간 앞에 <br> 삽입
+    // 패턴: 닫는괄호 또는 공백 뒤에 바로 연도숫자로 시작하는 경우
+    .replace(/([)\s])\s{2,}(\d{4})/g, '$1<br>$2')
+    .replace(/([)\s])\s+(\d{4}[.-]\d{2})/g, '$1<br>$2')
+    // 1차, 2차, 3차... 같은 구간 표시 앞에 <br>
+    .replace(/\s+(1차|2차|3차|4차|5차|6차)\s+/g, '<br>$1 ')
+    // 줄 시작이 날짜인 경우 (공백 2개 이상 + 날짜)
+    .replace(/\s{2,}(\d{4}[.-])/g, '<br>$1');
+  return result;
+}
+
+// ── 탭 전환 ──────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tab-leave').classList.toggle('active', tab === 'leave');
+  document.getElementById('tab-history').classList.toggle('active', tab === 'history');
+  document.getElementById('pane-leave').style.display    = tab === 'leave'   ? '' : 'none';
+  document.getElementById('pane-history').style.display  = tab === 'history' ? '' : 'none';
+
+  if (tab === 'history') {
+    // 조회 패널 숨기고 이력 패널 표시
+    document.getElementById('infoCard').style.display    = 'none';
+    document.getElementById('statusCard').style.display  = 'none';
+    document.getElementById('historyCard').style.display = 'block';
+    renderHistory();
+  } else {
+    document.getElementById('historyCard').style.display = 'none';
+    // 기존 선택 복원
+    if (currentLeave) {
+      document.getElementById('infoCard').style.display   = 'block';
+      document.getElementById('statusCard').style.display = 'block';
+    } else {
+      document.getElementById('infoCard').style.display   = 'block';
+    }
+  }
+}
+
+let selectedHistoryEmp = null;
+
+let selectedEmpNo = null; // 선택된 사번
+
+function renderHistory() {
+  const keyword = (document.getElementById('historySearch')?.value || '').trim().toLowerCase();
+  const ended = employees.filter(e => e.status === 'end');
+
+  // 검색 필터 (이름 또는 사번)
+  const filtered = keyword
+    ? ended.filter(e =>
+        (e.name || '').toLowerCase().includes(keyword) ||
+        (e.empNo || '').toLowerCase().includes(keyword))
+    : ended;
+
+  // 사번 기준으로 그룹핑 (사번 없으면 이름+휴직종류로 구분)
+  const groups = {};
+  filtered.forEach(e => {
+    const key = e.empNo || `${e.name}_${e.leaveId}`;
+    if (!groups[key]) groups[key] = { empNo: e.empNo, name: e.name, records: [] };
+    groups[key].records.push(e);
+  });
+
+  const list = document.getElementById('historyList');
+  if (Object.keys(groups).length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">${keyword ? '검색 결과 없음' : '종료된 이력이 없습니다'}</div>`;
+    document.getElementById('historyTableWrap').innerHTML = '';
+    document.getElementById('historyTitle').textContent = '📂 종료 이력';
+    document.getElementById('historySubtitle').textContent = '이름 또는 사번으로 검색하세요';
+    return;
+  }
+
+  document.getElementById('historySubtitle').textContent = `${Object.keys(groups).length}명`;
+
+  list.innerHTML = Object.entries(groups).map(([key, g]) => {
+    const leaveTypes = [...new Set(g.records.map(r => {
+      const l = leaves.find(lv => lv.id === r.leaveId);
+      return l ? l.icon : '📋';
+    }))].join(' ');
+    const isActive = selectedEmpNo === key;
+    return `<div class="history-item ${isActive?'active':''}" onclick="selectHistoryGroup('${key.replace(/'/g,"\\'")}')">
+      <div class="history-item-name">${g.name} ${g.empNo ? `<span style="font-size:10px;color:var(--muted);font-weight:400">(${g.empNo})</span>` : ''}</div>
+      <div class="history-item-sub">${leaveTypes} · ${g.records.length}건</div>
+    </div>`;
+  }).join('');
+
+  // 첫 번째 자동 선택
+  if (!selectedEmpNo && Object.keys(groups).length > 0) {
+    selectHistoryGroup(Object.keys(groups)[0]);
+  }
+}
+
+function selectHistoryGroup(key) {
+  selectedEmpNo = key;
+  const ended = employees.filter(e => e.status === 'end');
+  const records = ended.filter(e => (e.empNo || `${e.name}_${e.leaveId}`) === key);
+  if (records.length === 0) return;
+
+  const { name, empNo } = records[0];
+  document.getElementById('historyTitle').textContent = `📂 ${name}${empNo ? ` (${empNo})` : ''} — 종료 이력`;
+  document.getElementById('historySubtitle').textContent = `총 ${records.length}건`;
+
+  const rows = records.map((e, i) => {
+    const leave = leaves.find(l => l.id === e.leaveId);
+    const leaveName = leave ? `${leave.icon} ${leave.name}` : '-';
+    const dateLbl = DATE_LABEL[e.leaveId] || '없음';
+    const showDate = dateLbl !== '없음';
+    const idx = employees.indexOf(e);
+    return `<tr>
+      <td style="color:var(--muted);font-size:11px;font-weight:700;white-space:nowrap">${i+1}</td>
+      <td>${leaveName}</td>
+      <td class="join-col">${e.joinDate || '-'}</td>
+      <td class="process-col">${e.process || '-'}</td>
+      <td class="reason-col">${e.reason || '-'}</td>
+      <td class="period-col">${formatPeriod(e.period)}</td>
+      <td class="return-col">${e.returnDate || '-'}</td>
+      <td class="key-col">${showDate ? (e.keyDate || '-') : '-'}</td>
+      <td class="note-col">${(e.note || '-').replace(/\\n/g, '<br>')}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-sm" onclick="openHistoryForm(${idx})" style="padding:2px 7px;font-size:10px">수정</button>
+        <button class="btn-sm btn-danger" onclick="deleteHistoryEmp(${idx})" style="padding:2px 7px;font-size:10px">삭제</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('historyTableWrap').innerHTML = `
+    <table class="emp-table" style="min-width:600px">
+      <thead>
+        <tr>
+          <th>No</th><th>휴직종류</th><th>입사일</th><th>담당공정</th>
+          <th>사유</th><th>기간</th><th>복귀일</th><th>수술일/출산예정일</th><th>비고</th><th>관리</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  renderHistory();
+}
+
+function selectHistory(idx) { selectHistoryGroup(employees[idx]?.empNo || `${employees[idx]?.name}_${employees[idx]?.leaveId}`); }
+
+function deleteHistoryEmp(idx) {
+  if (!confirm(`"${employees[idx].name}" 이력을 삭제하시겠습니까?`)) return;
+  employees.splice(idx, 1);
+  selectedHistoryEmp = null;
+  document.getElementById('historyTableWrap').innerHTML = '';
+  document.getElementById('historyTitle').textContent = '📂 종료 이력';
+  document.getElementById('historySubtitle').textContent = '이름 또는 사번으로 검색하세요';
+  generateHistoryCode();
+  renderHistory();
+}
+
+// ── 주간 보고 표 ──────────────────────────────────────────────────────────────
+function toggleReport() {
+  const popup = document.getElementById('reportPopup');
+  const isOpen = popup.classList.contains('open');
+  // 알람 팝업 닫기
+  document.getElementById('alarmPopup').classList.remove('open');
+  if (isOpen) { popup.classList.remove('open'); return; }
+  renderReport();
+  popup.classList.add('open');
+}
+
+function renderReport() {} // 초기화용 (toggleReport에서 호출)
+
+function calcReport() {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  const active = e => e.status !== 'end';
+  const byLeave = id => employees.filter(e => active(e) && e.leaveId === id).length;
+
+  const 육아휴직   = byLeave(4);
+  const 장기병가   = byLeave(6);
+  const 가족돌봄   = byLeave(7) + byLeave(8);
+  const 기타       = byLeave(3) + byLeave(10) + byLeave(11);
+  const 열외자     = 육아휴직 + 장기병가 + 가족돌봄 + 기타;
+  const 육아기단축 = byLeave(5);
+  const 임산부단축 = byLeave(1);
+  const 단축근무자 = 육아기단축 + 임산부단축;
+
+  const totalVal = parseInt(document.getElementById('totalInput').value) || 0;
+  const 정상출근  = totalVal > 0 ? totalVal - 열외자 : '-';
+
+  // 셀만 업데이트 (innerHTML 전체 교체 X)
+  document.getElementById('reportDate').textContent = dateStr;
+  document.getElementById('r-total').textContent  = totalVal || '-';
+  document.getElementById('r-normal').textContent = 정상출근;
+  document.getElementById('r-out').textContent    = 열외자;
+  document.getElementById('r-육아').textContent   = 육아휴직;
+  document.getElementById('r-병가').textContent   = 장기병가;
+  document.getElementById('r-돌봄').textContent   = 가족돌봄;
+  document.getElementById('r-기타').textContent   = 기타;
+  document.getElementById('r-note').innerHTML =
+    `단축근무자: <span>${단축근무자}명</span> (육아기 단축근로: <span>${육아기단축}명</span> / 임산부 단축근로: <span>${임산부단축}명</span>)`;
+
+  document.getElementById('reportTableArea').style.display = 'block';
+}
+
+// ── 알람 벨 ──────────────────────────────────────────────────────────────────
+function initAlarm() {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const upcoming = employees
+    .filter(e => e.status !== 'end' && e.returnDate)
+    .map(e => {
+      const ret = new Date(e.returnDate);
+      ret.setHours(0,0,0,0);
+      const diff = Math.ceil((ret - today) / (1000*60*60*24));
+      return { ...e, diff };
+    })
+    .filter(e => e.diff >= 0 && e.diff <= 7)
+    .sort((a, b) => a.diff - b.diff);
+
+  const badge = document.getElementById('bellBadge');
+  const btn   = document.getElementById('bellBtn');
+
+  if (upcoming.length > 0) {
+    badge.textContent = upcoming.length;
+    badge.style.display = 'flex';
+    btn.classList.add('has-alarm');
+  } else {
+    badge.style.display = 'none';
+    btn.classList.remove('has-alarm');
+  }
+
+  // 팝업 내용 채우기
+  const body = document.getElementById('alarmBody');
+  if (upcoming.length === 0) {
+    body.innerHTML = '<div class="alarm-empty">3일 이내 복귀 예정 직원이 없습니다 ✅</div>';
+    return;
+  }
+
+  body.innerHTML = upcoming.map(e => {
+    const leave = leaves.find(l => l.id === e.leaveId);
+    const leaveName = leave ? `${leave.icon} ${leave.name}` : '-';
+    const dday = e.diff === 0 ? 'D-Day!' : `D-${e.diff}`;
+    const ddayColor = e.diff === 0 ? '#991b1b' : e.diff <= 2 ? '#c2410c' : e.diff <= 4 ? '#92400e' : '#1e5fa8';
+    const ddayBg   = e.diff === 0 ? '#fca5a5' : e.diff <= 2 ? '#fed7aa' : e.diff <= 4 ? '#fef3c7' : '#dbeafe';
+    return `<div class="alarm-item">
+      <div>
+        <div class="alarm-name">${e.name}</div>
+        <div class="alarm-type">${leaveName}</div>
+      </div>
+      <div class="alarm-date">
+        ${e.returnDate}
+        <div class="alarm-dday" style="background:${ddayBg};color:${ddayColor}">${dday}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAlarm() {
+  const popup = document.getElementById('alarmPopup');
+  popup.classList.toggle('open');
+}
+
+// 팝업 외부 클릭 시 닫기
+document.addEventListener('click', e => {
+  const alarmPopup  = document.getElementById('alarmPopup');
+  const reportPopup = document.getElementById('reportPopup');
+  const bellBtn     = document.getElementById('bellBtn');
+
+  if (alarmPopup.classList.contains('open') &&
+      !alarmPopup.contains(e.target) && !bellBtn.contains(e.target)) {
+    alarmPopup.classList.remove('open');
+  }
+  if (reportPopup.classList.contains('open') &&
+      !reportPopup.contains(e.target) && !e.target.closest('[onclick="toggleReport()"]')) {
+    reportPopup.classList.remove('open');
+  }
+});
+
+// ── 직원 관리 ─────────────────────────────────────────────────────────────────
+let managedEmps = JSON.parse(JSON.stringify(employees)); // 복사본으로 관리
+let editIdx = null;
+
+function openManager() {
+  // 종료(end) 제외한 현재 휴직중 직원만
+  managedEmps = JSON.parse(JSON.stringify(employees.filter(e => e.status !== 'end')));
+  renderManageList();
+  generateCode();
+  document.getElementById('managerModal').classList.add('open');
+  closeForm();
+
+  // 휴직종류 드롭다운 채우기
+  const sel = document.getElementById('f-leaveId');
+  sel.innerHTML = leaves.map(l => `<option value="${l.id}">${l.icon} ${l.name}</option>`).join('');
+}
+
+function closeManager() {
+  document.getElementById('managerModal').classList.remove('open');
+}
+
+function renderManageList() {
+  const statusLabel = { active:'휴직중', return:'복귀예정', pending:'대기중', end:'종료' };
+  const list = document.getElementById('empManageList');
+  if (managedEmps.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">등록된 직원이 없습니다</div>';
+    return;
+  }
+
+  // 복귀일자 빠른 순 정렬 (없으면 뒤로)
+  const sorted = managedEmps
+    .map((e, i) => ({ ...e, _origIdx: i }))
+    .sort((a, b) => {
+      const da = a.returnDate ? new Date(a.returnDate) : null;
+      const db = b.returnDate ? new Date(b.returnDate) : null;
+      if (da && db) return da - db;
+      if (da) return -1;
+      if (db) return 1;
+      return a._origIdx - b._origIdx;
+    });
+
+  list.innerHTML = sorted.map((e, displayIdx) => {
+    const leave = leaves.find(l => l.id === e.leaveId);
+    const leaveName = leave ? `${leave.icon} ${leave.name}` : '-';
+    const origIdx = e._origIdx;
+    return `<div class="emp-manage-item">
+      <div class="emp-manage-num">${displayIdx + 1}</div>
+      <div class="emp-manage-info">
+        <div class="emp-manage-name">${e.name} <span style="font-size:10px;color:var(--muted);font-weight:400">${statusLabel[e.status]||'휴직중'}</span></div>
+        <div class="emp-manage-sub">${leaveName} | 복귀: ${e.returnDate || '-'}</div>
+      </div>
+      <div class="emp-manage-btns">
+        <button class="btn-edit" onclick="openForm(${origIdx})">수정</button>
+        <button class="btn-del" onclick="deleteEmp(${origIdx})">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openForm(idx) {
+  editIdx = idx;
+  const form = document.getElementById('empForm');
+  form.classList.add('open');
+  document.getElementById('formTitle').textContent = idx === null ? '직원 추가' : '직원 수정';
+
+  if (idx !== null) {
+    const e = managedEmps[idx];
+    document.getElementById('f-name').value = e.name || '';
+    document.getElementById('f-empno').value = e.empNo || '';
+    document.getElementById('f-leaveId').value = e.leaveId || 1;
+    document.getElementById('f-joinDate').value = e.joinDate || '';
+    document.getElementById('f-process').value = e.process || '';
+    document.getElementById('f-reason').value = e.reason || '';
+    document.getElementById('f-period').value = e.period || '';
+    document.getElementById('f-returnDate').value = e.returnDate || '';
+    document.getElementById('f-keyDate').value = e.keyDate || '';
+    document.getElementById('f-status').value = e.status || 'active';
+    document.getElementById('f-note').value = (e.note || '').replace(/\\n/g, '\n');
+  } else {
+    ['f-name','f-empno','f-joinDate','f-process','f-reason','f-period','f-returnDate','f-keyDate','f-note']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-leaveId').value = 1;
+    document.getElementById('f-status').value = 'active';
+  }
+  updateKeyDateLabel();
+  form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function closeForm() {
+  document.getElementById('empForm').classList.remove('open');
+  editIdx = null;
+}
+
+function updateKeyDateLabel() {
+  const lid = parseInt(document.getElementById('f-leaveId').value);
+  const lbl = DATE_LABEL[lid] || '없음';
+  document.getElementById('f-keyDateLabel').textContent =
+    lbl === '없음' ? '수술일/출산예정일 (해당없음)' : lbl;
+  document.getElementById('f-keyDate').placeholder =
+    lbl === '없음' ? '해당 없음 — 빈칸 가능' : `예: 2026-06-08`;
+}
+document.addEventListener('change', e => { if(e.target.id === 'f-leaveId') updateKeyDateLabel(); });
+
+function saveEmp() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('이름을 입력하세요'); return; }
+  const emp = {
+    leaveId:    parseInt(document.getElementById('f-leaveId').value),
+    name,
+    empNo:      document.getElementById('f-empno').value.trim(),
+    joinDate:   document.getElementById('f-joinDate').value.trim(),
+    process:    document.getElementById('f-process').value.trim(),
+    reason:     document.getElementById('f-reason').value.trim(),
+    period:     document.getElementById('f-period').value.trim(),
+    returnDate: document.getElementById('f-returnDate').value.trim(),
+    keyDate:    document.getElementById('f-keyDate').value.trim(),
+    note:       document.getElementById('f-note').value.trim(),
+    status:     document.getElementById('f-status').value,
+  };
+  if (editIdx !== null) {
+    managedEmps[editIdx] = emp;
+  } else {
+    managedEmps.push(emp);
+  }
+  closeForm();
+  renderManageList();
+  generateCode();
+}
+
+function deleteEmp(idx) {
+  const emp = managedEmps[idx];
+  if (!confirm(`"${emp.name}" 을 종료 이력으로 이동하시겠습니까?\n(삭제되지 않고 종료 이력 탭에서 확인할 수 있습니다)`)) return;
+
+  // employees 원본 배열에서 status를 end로 변경
+  const origIdx = employees.findIndex(e =>
+    e.name === emp.name && e.leaveId === emp.leaveId && e.period === emp.period);
+  if (origIdx !== -1) employees[origIdx].status = 'end';
+
+  // managedEmps에서 즉시 제거 → 목록에서 바로 사라짐
+  managedEmps.splice(idx, 1);
+
+  renderManageList();
+  generateCode();
+}
+
+function generateCode() {
+  const escape = str => (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
+
+  // 현재 휴직중(managedEmps) + 종료 이력(employees의 end) 합쳐서 전체 코드 생성
+  const endEmps = employees.filter(e => e.status === 'end');
+  const allEmps = [...managedEmps, ...endEmps];
+
+  const lines = allEmps.map((e) => {
+    const leave = leaves.find(l => l.id === e.leaveId);
+    const leaveName = leave ? leave.name : '';
+    return `  {
+    leaveId: ${e.leaveId},           // ${leaveName}
+    name: '${escape(e.name)}',
+    empNo: '${escape(e.empNo||'')}',
+    joinDate: '${escape(e.joinDate||'')}',
+    process: '${escape(e.process||'')}',
+    reason: '${escape(e.reason||'')}',
+    period: '${escape(e.period||'')}',
+    returnDate: '${escape(e.returnDate||'')}',
+    keyDate: '${escape(e.keyDate||'')}',
+    note: '${escape(e.note||'')}',
+    status: '${e.status}',
+  }`;
+  });
+  const code = `const employees = [\n${lines.join(',\n')}\n];`;
+  document.getElementById('codeBox').textContent = code;
+}
+
+function copyCode() {
+  const code = document.getElementById('codeBox').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ 복사됨!';
+    btn.classList.add('copy-done');
+    setTimeout(() => {
+      btn.textContent = '복사';
+      btn.classList.remove('copy-done');
+    }, 2000);
+  });
+}
+
+// ── 파일 다운로드 ─────────────────────────────────────────────────────────────
+function downloadHTML() {
+  const escape = str => (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
+
+  // 현재 employees 전체를 코드로 생성
+  const lines = employees.map(e => {
+    const leave = leaves.find(l => l.id === e.leaveId);
+    const leaveName = leave ? leave.name : '';
+    return `  {
+    leaveId: ${e.leaveId},           // ${leaveName}
+    name: '${escape(e.name)}',
+    empNo: '${escape(e.empNo||'')}',
+    joinDate: '${escape(e.joinDate||'')}',
+    process: '${escape(e.process||'')}',
+    reason: '${escape(e.reason||'')}',
+    period: '${escape(e.period||'')}',
+    returnDate: '${escape(e.returnDate||'')}',
+    keyDate: '${escape(e.keyDate||'')}',
+    note: '${escape(e.note||'')}',
+    status: '${e.status}',
+  }`;
+  });
+  const newEmpCode = `const employees = [\n${lines.join(',\n')}\n];`;
+
+  // 현재 HTML 소스에서 employees 배열 부분만 교체
+  const source = document.documentElement.outerHTML;
+  const empStart = source.indexOf('const employees = [');
+  const empEnd   = source.indexOf('];', empStart) + 2;
+
+  if (empStart === -1) {
+    alert('employees 배열을 찾을 수 없습니다.');
+    return;
+  }
+
+  const newSource = source.slice(0, empStart) + newEmpCode + source.slice(empEnd);
+
+  // 다운로드
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const blob = new Blob([newSource], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `index.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── EXPORT PDF ────────────────────────────────────────────────────────────────
+function exportPDF() {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  const statusLabel = { active:'휴직중', return:'복귀예정', pending:'대기중', end:'종료' };
+  const statusCls   = { active:'pb-active', return:'pb-return', pending:'pb-pending', end:'pb-end' };
+
+  // 종료 제외한 전체 직원
+  const activeEmps = employees
+    .filter(e => e.status !== 'end')
+    .sort((a, b) => {
+      const da = a.returnDate ? new Date(a.returnDate) : null;
+      const db = b.returnDate ? new Date(b.returnDate) : null;
+      if (da && db) return da - db;
+      if (da) return -1;
+      if (db) return 1;
+      return 0;
+    });
+
+  if (activeEmps.length === 0) {
+    alert('등록된 휴직 인원이 없습니다.');
+    return;
+  }
+
+  // 휴직 종류별로 그룹핑
+  const grouped = {};
+  activeEmps.forEach(e => {
+    const leave = leaves.find(l => l.id === e.leaveId);
+    const leaveName = leave ? `${leave.icon} ${leave.name}` : '기타';
+    if (!grouped[leaveName]) grouped[leaveName] = [];
+    grouped[leaveName].push({ ...e, leaveName });
+  });
+
+  let tableRows = '';
+  let rowNum = 1;
+
+  Object.entries(grouped).forEach(([leaveName, emps]) => {
+    tableRows += `
+      <tr>
+        <td colspan="10" class="print-section-title">${leaveName} (${emps.length}명)</td>
+      </tr>`;
+    emps.forEach(e => {
+      const leave = leaves.find(l => l.id === e.leaveId);
+      const dateLbl = DATE_LABEL[e.leaveId] || '없음';
+      const showDate = dateLbl !== '없음';
+      tableRows += `
+        <tr>
+          <td>${rowNum++}</td>
+          <td>${e.empNo || '-'}</td>
+          <td><strong>${e.name}</strong></td>
+          <td>${e.joinDate || '-'}</td>
+          <td>${e.process || '-'}</td>
+          <td>${e.reason || '-'}</td>
+          <td>${e.period || '-'}</td>
+          <td>${e.returnDate || '-'}</td>
+          <td>${showDate ? (e.keyDate || '-') : '-'}</td>
+          <td>${(e.note || '-').replace(/\\n/g, ' / ')}</td>
+        </tr>`;
+    });
+  });
+
+  document.getElementById('printArea').innerHTML = `
+    <div class="print-title">HR 휴직/휴가 인원 현황</div>
+    <div class="print-meta">기준일: ${dateStr} &nbsp;|&nbsp; 총 ${activeEmps.length}명 &nbsp;|&nbsp; Creator: CFAO M 조율리</div>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>사번</th>
+          <th>이름</th>
+          <th>입사일</th>
+          <th>담당공정</th>
+          <th>사유</th>
+          <th>기간</th>
+          <th>복귀예정일</th>
+          <th>수술일/출산예정일</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+  `;
+
+  window.print();
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+init();
+initAlarm();
+</script>
+</body>
+</html>
